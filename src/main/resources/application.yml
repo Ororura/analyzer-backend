@@ -10,6 +10,10 @@ spring:
   web:
     resources:
       add-mappings: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
 
 server:
   shutdown: graceful
@@ -26,3 +30,8 @@ app:
     model: ${POLZA_MODEL:google/gemini-2.5-pro}
     api-key: ${POLZA_API_KEY:}
     timeout: ${POLZA_TIMEOUT:60s}
+  resume:
+    max-file-size: ${RESUME_MAX_FILE_SIZE:10MB}
+    target-role: ${RESUME_TARGET_ROLE:Java Backend Developer}
+    analysis-version: ${RESUME_ANALYSIS_VERSION:1}
+    baseline-version: ${RESUME_BASELINE_VERSION:2026-08}

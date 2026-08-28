@@ -2,6 +2,7 @@ package com.ororura.analyzer.config;
 
 import java.util.List;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -17,7 +18,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void addCorsMappings(CorsRegistry registry) {
+    public void addCorsMappings(@NonNull CorsRegistry registry) {
         if (!allowedOrigins.isEmpty()) {
             registry.addMapping("/api/**")
                     .allowedOrigins(allowedOrigins.toArray(String[]::new))

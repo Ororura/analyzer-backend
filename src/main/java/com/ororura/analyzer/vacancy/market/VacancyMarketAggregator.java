@@ -5,39 +5,20 @@ import java.math.RoundingMode;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
+import com.ororura.analyzer.resume.domain.TechnologyTaxonomy;
 import org.springframework.stereotype.Component;
 
 @Component
 public class VacancyMarketAggregator {
 
-    private static final Set<String> TECHNOLOGIES = Set.of(
-            "Java", "Spring Boot", "REST API", "SQL", "PostgreSQL", "Git", "Backend development",
-            "Hibernate/JPA", "Docker", "Testing", "Maven/Gradle", "Spring Data", "Spring Security",
-            "Kafka", "RabbitMQ", "Redis", "Kubernetes", "Microservices", "Prometheus", "Grafana",
-            "Linux", "CI/CD");
+    private static final TechnologyTaxonomy TAXONOMY = new TechnologyTaxonomy();
+
+    private static final Set<String> TECHNOLOGIES = Set.copyOf(TAXONOMY.tiers().keySet());
 
     private static final Map<String, Double> BASELINE_FREQUENCIES = baselineFrequencies();
-
-    private static final List<Alias> ALIASES = List.of(
-            alias("^java(?:\\s+\\d+)?$", "Java"),
-            alias("spring\\s*boot", "Spring Boot"),
-            alias("^(?:spring|spring framework)$", "Spring Boot"),
-            alias("(?:rest(?:ful)?(?:\\s*api|\\s*endpoint|\\s*service)?|web api)", "REST API"),
-            alias("postgres", "PostgreSQL"),
-            alias("^(?:sql|mysql|oracle|mariadb|relational database)$", "SQL"),
-            alias("(?:hibernate|\\bjpa\\b)", "Hibernate/JPA"),
-            alias("(?:maven|gradle)", "Maven/Gradle"),
-            alias("(?:junit|mockito|testcontainers|unit test|integration test)", "Testing"),
-            alias("spring\\s*data", "Spring Data"),
-            alias("spring\\s*security", "Spring Security"),
-            alias("microservice", "Microservices"),
-            alias("(?:ci/?cd|continuous integration)", "CI/CD"),
-            alias("backend", "Backend development"));
 
     public VacancyMarketData aggregate(List<MarketVacancy> vacancies, List<String> warnings) {
         if (vacancies.isEmpty()) {
@@ -75,16 +56,7 @@ public class VacancyMarketAggregator {
     }
 
     String canonicalTechnology(String value) {
-        String normalized = value == null ? "" : value.trim();
-        for (Alias alias : ALIASES) {
-            if (alias.pattern().matcher(normalized).find()) {
-                return alias.canonical();
-            }
-        }
-        return TECHNOLOGIES.stream()
-                .filter(skill -> skill.equalsIgnoreCase(normalized))
-                .findFirst()
-                .orElseGet(() -> capitalize(normalized));
+        return TAXONOMY.canonical(value);
     }
 
     private static void increment(Map<String, Integer> target, String value) {
@@ -99,17 +71,6 @@ public class VacancyMarketAggregator {
 
     private static double roundShare(int count, int total) {
         return BigDecimal.valueOf((double) count / total).setScale(2, RoundingMode.HALF_UP).doubleValue();
-    }
-
-    private static String capitalize(String value) {
-        if (value.isEmpty()) {
-            return value;
-        }
-        return value.substring(0, 1).toUpperCase(Locale.ROOT) + value.substring(1).toLowerCase(Locale.ROOT);
-    }
-
-    private static Alias alias(String expression, String canonical) {
-        return new Alias(Pattern.compile(expression, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE), canonical);
     }
 
     private static Map<String, Double> baselineFrequencies() {
@@ -137,8 +98,5 @@ public class VacancyMarketAggregator {
         frequencies.put("Linux", 0.29);
         frequencies.put("CI/CD", 0.31);
         return Map.copyOf(frequencies);
-    }
-
-    private record Alias(Pattern pattern, String canonical) {
     }
 }

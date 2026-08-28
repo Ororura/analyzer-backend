@@ -79,6 +79,7 @@ class PolzaClientTests {
     static List<Arguments> providerErrors() {
         return List.of(
                 Arguments.of(401, "{\"error\":{\"message\":\"Invalid API key\"}}", "Invalid API key"),
+                Arguments.of(429, "{\"error\":{\"message\":\"Rate limited\"}}", "Rate limited"),
                 Arguments.of(400, "{\"error\":{}}", "Polza AI вернул ошибку"),
                 Arguments.of(503, "not-json", "Polza AI вернул ошибку"));
     }

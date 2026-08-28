@@ -17,7 +17,7 @@ import static com.ororura.analyzer.ats.AtsScoringProperties.*;
 public class AtsScorer {
 
     public int clampScore(double value) {
-        return (int) Math.min(100, Math.max(0, Math.round(value)));
+        return (int) Math.clamp(Math.round(value), 0, 100);
     }
 
     public int calculateStructuredFiltersScore(StructuredFilters filters) {

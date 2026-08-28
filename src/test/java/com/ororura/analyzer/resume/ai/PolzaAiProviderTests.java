@@ -1,0 +1,53 @@
+package com.ororura.analyzer.resume.ai;
+
+import java.util.List;
+import java.util.Map;
+
+import com.ororura.analyzer.polza.PolzaClient;
+import com.ororura.analyzer.polza.PolzaClientException;
+import com.ororura.analyzer.resume.error.ResumeAnalysisException;
+import com.ororura.analyzer.resume.error.ResumeErrorCode;
+import com.ororura.analyzer.vacancy.market.VacancyMarketData;
+import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+
+class PolzaAiProviderTests {
+
+    private final PolzaClient client = mock(PolzaClient.class);
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final PolzaAiProvider provider = new PolzaAiProvider(client,
+            new ResumeAnalysisPromptFactory(objectMapper), new LlmResponseParser(objectMapper));
+
+    @Test
+    void parsesSuccessfulResponseWithoutRepairRequest() {
+        when(client.requestCompletion(any())).thenReturn(LlmBoundaryTests.validJson());
+        assertThat(provider.analyze("resume", market()).technicalAssessment().javaDepth()).isEqualTo(8);
+    }
+
+    @Test
+    void mapsRateLimitTimeoutAndOtherProviderFailures() {
+        assertMapped(new PolzaClientException("limited", 429), ResumeErrorCode.AI_RATE_LIMITED);
+        assertMapped(new PolzaClientException("provider timeout", null), ResumeErrorCode.AI_TIMEOUT);
+        assertMapped(new PolzaClientException("unauthorized", 401), ResumeErrorCode.AI_PROVIDER_UNAVAILABLE);
+        assertMapped(new PolzaClientException("down", 503), ResumeErrorCode.AI_PROVIDER_UNAVAILABLE);
+    }
+
+    private void assertMapped(PolzaClientException source, ResumeErrorCode expected) {
+        doThrow(source).when(client).requestCompletion(any());
+        assertThatThrownBy(() -> provider.analyze("resume", market()))
+                .isInstanceOf(ResumeAnalysisException.class)
+                .extracting(error -> ((ResumeAnalysisException) error).getCode())
+                .isEqualTo(expected);
+    }
+
+    private static VacancyMarketData market() {
+        return new VacancyMarketData("test", 1, Map.of(), Map.of(), Map.of(), Map.of(), List.of());
+    }
+}
