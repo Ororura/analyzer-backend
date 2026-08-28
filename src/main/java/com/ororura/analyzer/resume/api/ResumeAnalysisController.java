@@ -2,6 +2,7 @@ package com.ororura.analyzer.resume.api;
 
 import com.ororura.analyzer.api.ApiErrorResponse;
 import com.ororura.analyzer.resume.application.ResumeAnalysisService;
+import com.ororura.analyzer.resume.ai.AiProviderType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -11,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,7 +31,7 @@ public class ResumeAnalysisController {
             @ApiResponse(responseCode = "200", description = "Resume analyzed"),
             @ApiResponse(responseCode = "400", description = "Missing or empty file",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
-            @ApiResponse(responseCode = "413", description = "PDF is too large",
+            @ApiResponse(responseCode = "413", description = "PDF or extracted resume text is too large",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
             @ApiResponse(responseCode = "415", description = "Unsupported file type",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
@@ -45,7 +47,8 @@ public class ResumeAnalysisController {
     @PostMapping(value = "/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResumeAnalysisResult analyze(
-            @RequestPart("file") @Schema(type = "string", format = "binary") MultipartFile file) {
-        return service.analyze(file);
+            @RequestPart("file") @Schema(type = "string", format = "binary") MultipartFile file,
+            @RequestParam(name = "provider", required = false) AiProviderType provider) {
+        return service.analyze(file, provider);
     }
 }

@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import com.ororura.analyzer.polza.PolzaProperties;
+import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult.CandidateLevel;
@@ -19,11 +19,9 @@ import org.springframework.stereotype.Component;
 public class ResumeAnalysisAssembler {
 
     private final ResumeAnalysisProperties resumeProperties;
-    private final PolzaProperties polzaProperties;
 
-    public ResumeAnalysisAssembler(ResumeAnalysisProperties resumeProperties, PolzaProperties polzaProperties) {
+    public ResumeAnalysisAssembler(ResumeAnalysisProperties resumeProperties) {
         this.resumeProperties = resumeProperties;
-        this.polzaProperties = polzaProperties;
     }
 
     public ResumeAnalysisResult assemble(
@@ -38,7 +36,9 @@ public class ResumeAnalysisAssembler {
             CandidateLevel level,
             InterviewChance hrChance,
             InterviewChance technicalChance,
-            Instant generatedAt) {
+            Instant generatedAt,
+            AiProviderType provider,
+            String model) {
         LlmResumeAnalysisResponse.TechnicalAssessment technical = llm.technicalAssessment();
         LlmResumeAnalysisResponse.ExperienceAssessment experienceAssessment = llm.experienceAssessment();
         ResumeAnalysisResult.Scores scores = new ResumeAnalysisResult.Scores(
@@ -54,7 +54,7 @@ public class ResumeAnalysisAssembler {
                 llm.strengths(), llm.weaknesses(), llm.atsIssues(), llm.recommendations(),
                 new ResumeAnalysisResult.Market(market.source(), market.sampleSize()),
                 new ResumeAnalysisResult.Metadata(resumeProperties.analysisVersion(), resumeProperties.baselineVersion(),
-                        generatedAt, polzaProperties.model()),
+                        generatedAt, provider, model),
                 warnings(market.warnings(), llm.warnings()));
     }
 

@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.ororura.analyzer.resume.application.ResumeAnalysisService;
+import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -33,15 +37,35 @@ class ResumeAnalysisEndpointTests {
 
     @Test
     void exposesSuccessfulMultipartAnalysis() throws Exception {
-        when(service.analyze(any())).thenReturn(result());
+        when(service.analyze(any(), nullable(AiProviderType.class))).thenReturn(result());
         MockMultipartFile file = new MockMultipartFile("file", "resume.pdf", "application/pdf", "%PDF-test".getBytes());
 
-        mockMvc.perform(multipart("/api/resume/analyze").file(file))
+        mockMvc.perform(multipart("/api/resume/analyze").file(file).param("provider", "CODEX_CLI"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.targetRole").value("Java Backend Developer"))
                 .andExpect(jsonPath("$.detectedLevel").value("junior_plus"))
                 .andExpect(jsonPath("$.hrScreeningChance").value("HIGH"))
-                .andExpect(jsonPath("$.metadata.generatedAt").value("2026-08-28T07:00:00Z"));
+                .andExpect(jsonPath("$.metadata.generatedAt").value("2026-08-28T07:00:00Z"))
+                .andExpect(jsonPath("$.metadata.provider").value("POLZA"));
+        verify(service).analyze(any(), eq(AiProviderType.CODEX_CLI));
+    }
+
+    @Test
+    void rejectsUnknownProviderEnum() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "resume.pdf", "application/pdf", "%PDF-test".getBytes());
+        mockMvc.perform(multipart("/api/resume/analyze").file(file).param("provider", "user-command"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_QUERY"));
+    }
+
+    @Test
+    void exposesProviderAvailabilityWithoutSensitiveReasons() throws Exception {
+        mockMvc.perform(get("/api/ai/providers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.defaultProvider").value("POLZA"))
+                .andExpect(jsonPath("$.providers[0].id").value("POLZA"))
+                .andExpect(jsonPath("$.providers[1].id").value("CODEX_CLI"))
+                .andExpect(jsonPath("$.providers[0].reason").doesNotExist());
     }
 
     @Test
@@ -50,7 +74,7 @@ class ResumeAnalysisEndpointTests {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("INVALID_FILE"));
 
-        when(service.analyze(any())).thenThrow(new ResumeAnalysisException(
+        when(service.analyze(any(), nullable(AiProviderType.class))).thenThrow(new ResumeAnalysisException(
                 ResumeErrorCode.AI_PROVIDER_UNAVAILABLE, "AI provider is unavailable"));
         MockMultipartFile file = new MockMultipartFile("file", "resume.pdf", "application/pdf", "%PDF-test".getBytes());
         mockMvc.perform(multipart("/api/resume/analyze").file(file))
@@ -63,6 +87,7 @@ class ResumeAnalysisEndpointTests {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/api/resume/analyze'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/ai/providers'].get").exists())
                 .andExpect(jsonPath("$.components.schemas.ResumeAnalysisResult").exists());
     }
 
@@ -74,7 +99,8 @@ class ResumeAnalysisEndpointTests {
                 new ResumeAnalysisResult.Skills(List.of("Java"), List.of("Docker"), List.of("Kubernetes")),
                 List.of("strength"), List.of("weakness"), List.of("issue"), List.of("recommendation"),
                 new ResumeAnalysisResult.Market("test", 20),
-                new ResumeAnalysisResult.Metadata("1", "2026-08", Instant.parse("2026-08-28T07:00:00Z"), "test-model"),
+                new ResumeAnalysisResult.Metadata("1", "2026-08", Instant.parse("2026-08-28T07:00:00Z"),
+                        AiProviderType.POLZA, "test-model"),
                 List.of());
     }
 }

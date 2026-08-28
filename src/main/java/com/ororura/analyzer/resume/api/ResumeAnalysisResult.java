@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.ororura.analyzer.resume.ai.AiProviderType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(name = "ResumeAnalysisResult")
@@ -62,7 +63,8 @@ public record ResumeAnalysisResult(
     public record Market(String source, int sampleSize) {
     }
 
-    public record Metadata(String analysisVersion, String baselineVersion, Instant generatedAt, String model) {
+    public record Metadata(String analysisVersion, String baselineVersion, Instant generatedAt,
+            AiProviderType provider, String model) {
     }
 
     public enum CandidateLevel {

@@ -11,6 +11,7 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -51,6 +52,11 @@ public class ApiExceptionHandler {
                 .map(violation -> violation.getMessage())
                 .orElse("Invalid request");
         return ResponseEntity.badRequest().body(ApiErrorResponse.of("INVALID_QUERY", message));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException exception) {
+        return ResponseEntity.badRequest().body(ApiErrorResponse.of("INVALID_QUERY", "Invalid request parameter"));
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)

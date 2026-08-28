@@ -8,5 +8,6 @@ public record ResumeAnalysisProperties(
         DataSize maxFileSize,
         String targetRole,
         String analysisVersion,
-        String baselineVersion) {
+        String baselineVersion,
+        int maxTextLength) {
 }

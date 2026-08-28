@@ -2,9 +2,12 @@ package com.ororura.analyzer.resume.ai;
 
 import java.util.List;
 import java.util.Map;
+import java.net.URI;
+import java.time.Duration;
 
 import com.ororura.analyzer.polza.PolzaClient;
 import com.ororura.analyzer.polza.PolzaClientException;
+import com.ororura.analyzer.polza.PolzaProperties;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
@@ -23,7 +26,9 @@ class PolzaAiProviderTests {
     private final PolzaClient client = mock(PolzaClient.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final PolzaAiProvider provider = new PolzaAiProvider(client,
-            new ResumeAnalysisPromptFactory(objectMapper), new LlmResponseParser(objectMapper));
+            new ResumeAnalysisPromptFactory(objectMapper), new LlmResponseParser(objectMapper),
+            new PolzaProperties(true, URI.create("https://polza.ai/api/v1"), "test-model", "secret",
+                    Duration.ofSeconds(1)));
 
     @Test
     void parsesSuccessfulResponseWithoutRepairRequest() {

@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PdfProcessingTests {
 
     private final PdfFileValidator validator = new PdfFileValidator(
-            new ResumeAnalysisProperties(DataSize.ofBytes(1024), "Java Backend Developer", "1", "2026-08"));
+            new ResumeAnalysisProperties(DataSize.ofBytes(1024), "Java Backend Developer", "1", "2026-08", 200_000));
     private final PdfBoxTextExtractor extractor = new PdfBoxTextExtractor();
 
     @Test

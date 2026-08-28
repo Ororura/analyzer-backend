@@ -123,7 +123,7 @@ class PolzaClientTests {
     @Test
     void readsApiKeyOnlyFromServerConfiguration() {
         PolzaClient missingKeyClient = new PolzaClient(
-                new PolzaProperties(baseUrl(), "google/gemini-test", "", Duration.ofSeconds(1)), objectMapper);
+                new PolzaProperties(true, baseUrl(), "google/gemini-test", "", Duration.ofSeconds(1)), objectMapper);
 
         assertThatThrownBy(() -> missingKeyClient.requestCompletion(request()))
                 .isInstanceOf(PolzaClientException.class)
@@ -133,7 +133,7 @@ class PolzaClientTests {
 
     private PolzaClient createClient(Duration timeout) {
         return new PolzaClient(
-                new PolzaProperties(baseUrl(), "google/gemini-test", "server-secret", timeout), objectMapper);
+                new PolzaProperties(true, baseUrl(), "google/gemini-test", "server-secret", timeout), objectMapper);
     }
 
     private URI baseUrl() {

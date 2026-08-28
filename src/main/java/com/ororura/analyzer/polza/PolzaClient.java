@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -18,7 +17,6 @@ import tools.jackson.databind.ObjectMapper;
 import static com.ororura.analyzer.polza.PolzaDtos.*;
 
 @Component
-@EnableConfigurationProperties(PolzaProperties.class)
 public class PolzaClient {
 
     private final PolzaProperties properties;

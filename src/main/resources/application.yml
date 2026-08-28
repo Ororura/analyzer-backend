@@ -26,6 +26,7 @@ app:
     connect-timeout: 3s
     read-timeout: 8s
   polza:
+    enabled: ${POLZA_ENABLED:true}
     base-url: ${POLZA_BASE_URL:https://polza.ai/api/v1}
     model: ${POLZA_MODEL:google/gemini-2.5-pro}
     api-key: ${POLZA_API_KEY:}
@@ -35,3 +36,13 @@ app:
     target-role: ${RESUME_TARGET_ROLE:Java Backend Developer}
     analysis-version: ${RESUME_ANALYSIS_VERSION:1}
     baseline-version: ${RESUME_BASELINE_VERSION:2026-08}
+    max-text-length: ${RESUME_MAX_TEXT_LENGTH:200000}
+  ai:
+    default-provider: ${AI_DEFAULT_PROVIDER:POLZA}
+    codex:
+      enabled: ${CODEX_ENABLED:false}
+      executable: ${CODEX_EXECUTABLE:codex}
+      model: ${CODEX_MODEL:}
+      timeout: ${CODEX_TIMEOUT:120s}
+      availability-timeout: ${CODEX_AVAILABILITY_TIMEOUT:5s}
+      max-concurrent-processes: ${CODEX_MAX_CONCURRENT_PROCESSES:2}
