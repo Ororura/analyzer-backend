@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: analyzer
+  profiles:
+    default: dev
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+
+server:
+  shutdown: graceful
+
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  hh:
+    base-url: ${HH_BASE_URL:https://hh.ru}
+    connect-timeout: 3s
+    read-timeout: 8s
+  polza:
+    base-url: ${POLZA_BASE_URL:https://polza.ai/api/v1}
+    model: ${POLZA_MODEL:google/gemini-2.5-pro}
+    api-key: ${POLZA_API_KEY:}
+    timeout: ${POLZA_TIMEOUT:60s}
