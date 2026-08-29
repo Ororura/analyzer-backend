@@ -27,7 +27,13 @@ public class ResumeAnalysisAssembler {
     public ResumeAnalysisResult assemble(LlmResumeAnalysisResponse llm, ExperienceSummary experience, TechnologyProfile technologies, VacancyMarketData market, int commercialScore, int ats, int overall, int candidateStrength, CandidateLevel level, InterviewChance hrChance, InterviewChance technicalChance, Instant generatedAt, AiProviderType provider, String model) {
         LlmResumeAnalysisResponse.TechnicalAssessment technical = llm.technicalAssessment();
         LlmResumeAnalysisResponse.ExperienceAssessment experienceAssessment = llm.experienceAssessment();
-        ResumeAnalysisResult.Scores scores = new ResumeAnalysisResult.Scores(technical.javaDepth(), technical.springDepth(), technical.backendDepth(), technical.sqlPostgresqlDepth(), technical.hibernateJpaDepth(), technical.infrastructureDepth(), technical.messagingCacheDepth(), technical.testingDepth(), commercialScore, experienceAssessment.experienceDescriptionQuality(), ats, llm.resumeAssessment().resumeQuality() * 10);
+        ResumeAnalysisResult.Scores scores = new ResumeAnalysisResult.Scores(
+                technical.javaDepth().score(), technical.springDepth().score(), technical.backendDepth().score(),
+                technical.sqlPostgresqlDepth().score(), technical.hibernateJpaDepth().score(),
+                technical.infrastructureDepth().score(), technical.messagingCacheDepth().score(),
+                technical.testingDepth().score(), commercialScore,
+                experienceAssessment.experienceDescriptionQuality().score(), ats,
+                llm.resumeAssessment().resumeQuality().score() * 10);
         return new ResumeAnalysisResult(resumeProperties.targetRole(), level, scores, overall, candidateStrength, hrChance, technicalChance, new ResumeAnalysisResult.Experience(experience.commercialMonths(), experience.commercialYears(), experience.remainingMonths()), new ResumeAnalysisResult.Skills(technologies.confirmed(), technologies.weakEvidence(), technologies.missing()), llm.strengths(), llm.weaknesses(), llm.atsIssues(), llm.recommendations(), new ResumeAnalysisResult.Market(market.source(), market.sampleSize()), new ResumeAnalysisResult.Metadata(resumeProperties.analysisVersion(), resumeProperties.baselineVersion(), generatedAt, provider, model), warnings(market.warnings(), llm.warnings()));
     }
 

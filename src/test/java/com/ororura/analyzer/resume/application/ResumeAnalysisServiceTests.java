@@ -122,13 +122,18 @@ class ResumeAnalysisServiceTests {
 
     private static LlmResumeAnalysisResponse llm() {
         return new LlmResumeAnalysisResponse(
-                new LlmResumeAnalysisResponse.TechnicalAssessment(8, 7, 8, 7, 6, 6, 7, 6),
-                new LlmResumeAnalysisResponse.ExperienceAssessment(7, 8, 6),
-                new LlmResumeAnalysisResponse.ResumeAssessment(7, 8),
+                new LlmResumeAnalysisResponse.TechnicalAssessment(
+                        score(8), score(7), score(8), score(7), score(6), score(6), score(7), score(6)),
+                new LlmResumeAnalysisResponse.ExperienceAssessment(score(7), score(8), score(6)),
+                new LlmResumeAnalysisResponse.ResumeAssessment(score(7), score(8)),
                 new LlmResumeAnalysisResponse.Skills(List.of("Java", "Postgres"), List.of("Docker"), List.of("K8s")),
                 List.of(new LlmResumeAnalysisResponse.EmploymentPeriod(
                         "Example", "Java Developer", 2025, 5, null, null, true)),
                 List.of("strength"), List.of("weakness"), List.of("issue"), List.of("recommendation"), List.of());
+    }
+
+    private static LlmResumeAnalysisResponse.SemanticScore score(int value) {
+        return new LlmResumeAnalysisResponse.SemanticScore(value, List.of("evidence"));
     }
 
     private static VacancyMarketData market() {

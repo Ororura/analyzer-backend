@@ -121,19 +121,23 @@ public class ResumeAnalysisService {
         int commercialScore = experienceCalculator.commercialScore(experience.commercialMonths());
         TechnologyProfile technologies = taxonomy.profile(text, llm.skills().confirmed(),
                 llm.skills().weakEvidence(), llm.skills().missing());
-        AtsScore ats = atsCalculator.calculate(llm.resumeAssessment().atsReadability(),
-                llm.resumeAssessment().resumeQuality(), llm.experienceAssessment().experienceDescriptionQuality(),
+        AtsScore ats = atsCalculator.calculate(llm.resumeAssessment().atsReadability().score(),
+                llm.resumeAssessment().resumeQuality().score(),
+                llm.experienceAssessment().experienceDescriptionQuality().score(),
                 commercialScore, technologies, market);
         LlmResumeAnalysisResponse.TechnicalAssessment technical = llm.technicalAssessment();
-        int technicalScore = overallCalculator.technicalScore(technical.javaDepth(), technical.springDepth(),
-                technical.backendDepth(), technical.sqlPostgresqlDepth(), technical.hibernateJpaDepth(),
-                technical.infrastructureDepth(), technical.messagingCacheDepth(), technical.testingDepth());
+        int technicalScore = overallCalculator.technicalScore(technical.javaDepth().score(),
+                technical.springDepth().score(), technical.backendDepth().score(),
+                technical.sqlPostgresqlDepth().score(), technical.hibernateJpaDepth().score(),
+                technical.infrastructureDepth().score(), technical.messagingCacheDepth().score(),
+                technical.testingDepth().score());
         int overall = overallCalculator.overall(technicalScore, ats.total(), commercialScore,
-                llm.resumeAssessment().resumeQuality() * 10, llm.experienceAssessment().responsibilityLevel());
+                llm.resumeAssessment().resumeQuality().score() * 10,
+                llm.experienceAssessment().responsibilityLevel().score());
         int strength = strengthCalculator.calculate(technicalScore, commercialScore,
-                llm.experienceAssessment().responsibilityLevel());
+                llm.experienceAssessment().responsibilityLevel().score());
         var level = levelPolicy.detect(experience.commercialMonths(), technicalScore,
-                llm.experienceAssessment().responsibilityLevel(), overall);
+                llm.experienceAssessment().responsibilityLevel().score(), overall);
         var hrChance = chancePolicy.hr(ats.total(), overall);
         var technicalChance = chancePolicy.technical(technicalScore, overall);
         Instant completed = clock.instant();

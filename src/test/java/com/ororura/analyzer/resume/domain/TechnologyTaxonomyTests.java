@@ -29,4 +29,12 @@ class TechnologyTaxonomyTests {
         assertThat(profile.weakEvidence()).contains("Docker");
         assertThat(profile.missing()).containsExactly("Kubernetes");
     }
+
+    @Test
+    void treatsUnclassifiedTextMentionsAsWeakEvidence() {
+        var profile = taxonomy.profile("Skills: Java, Spring Boot", List.of(), List.of(), List.of());
+
+        assertThat(profile.confirmed()).isEmpty();
+        assertThat(profile.weakEvidence()).containsExactly("Java", "Spring Boot");
+    }
 }

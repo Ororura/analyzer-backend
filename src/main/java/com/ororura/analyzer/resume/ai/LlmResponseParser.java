@@ -85,8 +85,20 @@ public class LlmResponseParser {
                 "responsibilityLevel");
         required(root.path("resumeAssessment"), "resumeQuality", "atsReadability");
         required(root.path("skills"), "confirmed", "weakEvidence", "missing");
+        requireScores(root.path("technicalAssessment"), "javaDepth", "springDepth", "backendDepth",
+                "sqlPostgresqlDepth", "hibernateJpaDepth", "infrastructureDepth", "messagingCacheDepth",
+                "testingDepth");
+        requireScores(root.path("experienceAssessment"), "commercialRelevance", "experienceDescriptionQuality",
+                "responsibilityLevel");
+        requireScores(root.path("resumeAssessment"), "resumeQuality", "atsReadability");
         for (JsonNode period : root.path("employmentPeriods")) {
             required(period, "company", "position", "startYear", "startMonth", "endYear", "endMonth", "current");
+        }
+    }
+
+    private static void requireScores(JsonNode assessment, String... fields) {
+        for (String field : fields) {
+            required(assessment.path(field), "score", "evidence");
         }
     }
 

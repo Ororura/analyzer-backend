@@ -74,8 +74,8 @@ public class TechnologyTaxonomy {
         add(evidence, weak, Evidence.WEAK);
         add(evidence, confirmed, Evidence.CONFIRMED);
         return new TechnologyProfile(Collections.unmodifiableMap(evidence),
-                names(evidence, Evidence.CONFIRMED, Evidence.EXPLICIT),
-                names(evidence, Evidence.WEAK), names(evidence, Evidence.MISSING));
+                names(evidence, Evidence.CONFIRMED),
+                names(evidence, Evidence.WEAK, Evidence.EXPLICIT), names(evidence, Evidence.MISSING));
     }
 
     public Map<String, Tier> tiers() {

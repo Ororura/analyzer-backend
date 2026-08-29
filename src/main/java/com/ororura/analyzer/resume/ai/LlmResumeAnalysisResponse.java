@@ -28,32 +28,41 @@ public record LlmResumeAnalysisResponse(
     }
 
     public record TechnicalAssessment(
-            int javaDepth,
-            int springDepth,
-            int backendDepth,
-            int sqlPostgresqlDepth,
-            int hibernateJpaDepth,
-            int infrastructureDepth,
-            int messagingCacheDepth,
-            int testingDepth) {
+            SemanticScore javaDepth,
+            SemanticScore springDepth,
+            SemanticScore backendDepth,
+            SemanticScore sqlPostgresqlDepth,
+            SemanticScore hibernateJpaDepth,
+            SemanticScore infrastructureDepth,
+            SemanticScore messagingCacheDepth,
+            SemanticScore testingDepth) {
         public TechnicalAssessment {
-            scores(javaDepth, springDepth, backendDepth, sqlPostgresqlDepth, hibernateJpaDepth,
+            requireScores(javaDepth, springDepth, backendDepth, sqlPostgresqlDepth, hibernateJpaDepth,
                     infrastructureDepth, messagingCacheDepth, testingDepth);
         }
     }
 
     public record ExperienceAssessment(
-            int commercialRelevance,
-            int experienceDescriptionQuality,
-            int responsibilityLevel) {
+            SemanticScore commercialRelevance,
+            SemanticScore experienceDescriptionQuality,
+            SemanticScore responsibilityLevel) {
         public ExperienceAssessment {
-            scores(commercialRelevance, experienceDescriptionQuality, responsibilityLevel);
+            requireScores(commercialRelevance, experienceDescriptionQuality, responsibilityLevel);
         }
     }
 
-    public record ResumeAssessment(int resumeQuality, int atsReadability) {
+    public record ResumeAssessment(SemanticScore resumeQuality, SemanticScore atsReadability) {
         public ResumeAssessment {
-            scores(resumeQuality, atsReadability);
+            requireScores(resumeQuality, atsReadability);
+        }
+    }
+
+    public record SemanticScore(int score, List<String> evidence) {
+        public SemanticScore {
+            if (score < 0 || score > 10) {
+                throw new IllegalArgumentException("Semantic score must be in range 0..10");
+            }
+            evidence = copy(evidence, "semanticScore.evidence");
         }
     }
 
@@ -68,16 +77,16 @@ public record LlmResumeAnalysisResponse(
     public record EmploymentPeriod(
             String company,
             String position,
-            int startYear,
-            int startMonth,
+            Integer startYear,
+            Integer startMonth,
             Integer endYear,
             Integer endMonth,
             boolean current) {
     }
 
-    private static void scores(int... scores) {
-        for (int score : scores) {
-            if (score < 0 || score > 10) throw new IllegalArgumentException("Semantic score must be in range 0..10");
+    private static void requireScores(SemanticScore... scores) {
+        for (SemanticScore score : scores) {
+            require(score, "semanticScore");
         }
     }
 
