@@ -1,9 +1,6 @@
 package com.ororura.analyzer.codex;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -28,11 +25,9 @@ public class CodexCliAvailabilityChecker {
 
     public boolean isAvailable() {
         if (!properties.enabled()) return false;
-        Path directory = null;
-        try {
-            directory = Files.createTempDirectory("codex-availability-");
+        try (var directory = TemporaryDirectory.create("codex-availability-")) {
             ProcessRunner.ProcessResult result = processRunner.run(new ProcessRunner.ProcessRequest(
-                    List.of(properties.executable(), "exec", "--help"), directory, "",
+                    List.of(properties.executable(), "exec", "--help"), directory.path(), "",
                     properties.availabilityTimeout()));
             if (result.timedOut() || result.exitCode() != 0) return false;
             String help = result.stdout() + '\n' + result.stderr();
@@ -40,23 +35,6 @@ public class CodexCliAvailabilityChecker {
         } catch (IOException | ProcessRunner.StartException | ProcessRunner.ExecutionException exception) {
             log.info("Codex provider unavailable category={}", exception.getClass().getSimpleName());
             return false;
-        } finally {
-            deleteRecursively(directory);
-        }
-    }
-
-    public static void deleteRecursively(Path directory) {
-        if (directory == null || !Files.exists(directory)) return;
-        try (var paths = Files.walk(directory)) {
-            paths.sorted(Comparator.reverseOrder()).forEach(path -> {
-                try {
-                    Files.deleteIfExists(path);
-                } catch (IOException ignored) {
-                    // Cleanup is best-effort and paths are never exposed to callers.
-                }
-            });
-        } catch (IOException ignored) {
-            // Cleanup is best-effort and paths are never exposed to callers.
         }
     }
 }

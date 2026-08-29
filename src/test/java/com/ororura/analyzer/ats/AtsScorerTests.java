@@ -3,13 +3,22 @@ package com.ororura.analyzer.ats;
 import java.util.List;
 import java.util.stream.Stream;
 
+import com.ororura.analyzer.ats.domain.AtsScores.ScreeningChance;
+import com.ororura.analyzer.ats.domain.MatchingAssessment.FilterAssessment;
+import com.ororura.analyzer.ats.domain.MatchingAssessment.FilterStatus;
+import com.ororura.analyzer.ats.domain.MatchingAssessment.ResumeFilterAssessment;
+import com.ororura.analyzer.ats.domain.MatchingAssessment.TechnologyStatus;
+import com.ororura.analyzer.ats.domain.NormalizedAtsAnalysis;
+import com.ororura.analyzer.ats.domain.NormalizedAtsAnalysis.NormalizedTechnologyAssessment;
+import com.ororura.analyzer.ats.domain.ResumeAtsAnalysis;
+import com.ororura.analyzer.ats.scoring.AtsScorer;
+import com.ororura.analyzer.ats.scoring.AtsScoringProperties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import static com.ororura.analyzer.ats.AtsModels.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AtsScorerTests {
@@ -40,7 +49,7 @@ class AtsScorerTests {
 
     @ParameterizedTest
     @MethodSource("structuredFilterCases")
-    void preservesUnknownFilterSemantics(StructuredFilters filters, int expected) {
+    void preservesUnknownFilterSemantics(ResumeFilterAssessment filters, int expected) {
         assertThat(scorer.calculateStructuredFiltersScore(filters)).isEqualTo(expected);
     }
 
@@ -50,22 +59,23 @@ class AtsScorerTests {
         FilterAssessment partial = filter(FilterStatus.PARTIAL);
         FilterAssessment mismatch = filter(FilterStatus.MISMATCH);
         return Stream.of(
-                Arguments.of(new StructuredFilters(unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown), 50),
-                Arguments.of(new StructuredFilters(match, unknown, unknown, unknown, unknown, unknown, unknown, unknown), 100),
-                Arguments.of(new StructuredFilters(match, partial, mismatch, unknown, unknown, unknown, unknown, unknown), 53));
+                Arguments.of(filters(unknown, unknown, unknown), 50),
+                Arguments.of(filters(match, unknown, unknown), 100),
+                Arguments.of(filters(match, partial, mismatch), 53));
     }
 
     @Test
     void skillsOnlyScoresBelowConfirmedExperience() {
-        RawAtsAnalysis confirmed = AtsFixture.raw();
-        List<RawTechnologyAssessment> skillsOnly = confirmed.technologies().stream()
+        NormalizedAtsAnalysis confirmed = AtsFixture.normalized();
+        List<NormalizedTechnologyAssessment> skillsOnly = confirmed.technologies().stream()
                 .map(item -> item.technology().equals("Java")
                         ? AtsFixture.technology("Java", TechnologyStatus.SKILLS_ONLY, item.evidence())
                         : item)
                 .toList();
 
-        assertThat(scorer.calculateKeywordCoverage(confirmed.technologies(), confirmed.detectedLevel()))
-                .isGreaterThan(scorer.calculateKeywordCoverage(skillsOnly, confirmed.detectedLevel()));
+        assertThat(scorer.calculateKeywordCoverage(confirmed.technologies(), confirmed.candidate().detectedLevel()))
+                .isGreaterThan(scorer.calculateKeywordCoverage(
+                        skillsOnly, confirmed.candidate().detectedLevel()));
     }
 
     @ParameterizedTest
@@ -76,28 +86,38 @@ class AtsScorerTests {
 
     @Test
     void identicalFactsProduceIdenticalFinalResult() {
-        AtsAnalysisResult first = scorer.finalizeAtsAnalysis(AtsFixture.raw(), AtsFixture.baselineMarket());
-        AtsAnalysisResult second = scorer.finalizeAtsAnalysis(AtsFixture.raw(), AtsFixture.baselineMarket());
+        ResumeAtsAnalysis first = scorer.finalizeAtsAnalysis(AtsFixture.normalized(), AtsFixture.baselineMarket());
+        ResumeAtsAnalysis second = scorer.finalizeAtsAnalysis(AtsFixture.normalized(), AtsFixture.baselineMarket());
 
         assertThat(second).isEqualTo(first);
     }
 
     @Test
     void matchesTypeScriptFixtureResults() {
-        AtsAnalysisResult result = scorer.finalizeAtsAnalysis(AtsFixture.raw(), AtsFixture.baselineMarket());
+        ResumeAtsAnalysis result = scorer.finalizeAtsAnalysis(AtsFixture.normalized(), AtsFixture.baselineMarket());
 
-        assertThat(result.atsScore()).isEqualTo(66);
-        assertThat(result.hhStructuredFilters()).isEqualTo(100);
-        assertThat(result.vacancyMatch()).isEqualTo(46);
-        assertThat(result.keywordCoverage()).isEqualTo(31);
-        assertThat(result.screeningChance()).isEqualTo(ScreeningChance.MEDIUM);
-        assertThat(result.keywords().explicitlyPresent()).containsExactly("Java", "PostgreSQL");
-        assertThat(result.keywords().semanticallyPresent()).containsExactly("Spring Boot", "REST API");
-        assertThat(result.keywords().confirmedByExperience()).containsExactly("Java", "Spring Boot", "REST API");
-        assertThat(result.keywords().skillsOnly()).containsExactly("PostgreSQL");
-        assertThat(result.keywords().optional()).containsExactly("Kafka", "Kubernetes");
-        assertThat(result.experience().backendExperience().value()).isEqualTo("1 год 6 месяцев");
-        assertThat(result.experience().relevantJavaExperience().value()).isEqualTo("6 месяцев");
+        assertThat(result.scores().atsScore()).isEqualTo(66);
+        assertThat(result.scores().hhStructuredFilters()).isEqualTo(100);
+        assertThat(result.scores().vacancyMatch()).isEqualTo(46);
+        assertThat(result.scores().keywordCoverage()).isEqualTo(31);
+        assertThat(result.scores().screeningChance()).isEqualTo(ScreeningChance.MEDIUM);
+        assertThat(result.matching().keywords().explicitlyPresent()).containsExactly("Java", "PostgreSQL");
+        assertThat(result.matching().keywords().semanticallyPresent()).containsExactly("Spring Boot", "REST API");
+        assertThat(result.matching().keywords().confirmedByExperience())
+                .containsExactly("Java", "Spring Boot", "REST API");
+        assertThat(result.matching().keywords().skillsOnly()).containsExactly("PostgreSQL");
+        assertThat(result.matching().keywords().optional()).containsExactly("Kafka", "Kubernetes");
+        assertThat(result.candidate().experience().backendExperience().value()).isEqualTo("1 год 6 месяцев");
+        assertThat(result.candidate().experience().relevantJavaExperience().value()).isEqualTo("6 месяцев");
+    }
+
+    private static ResumeFilterAssessment filters(
+            FilterAssessment experience,
+            FilterAssessment education,
+            FilterAssessment location) {
+        FilterAssessment unknown = filter(FilterStatus.UNKNOWN);
+        return new ResumeFilterAssessment(
+                experience, education, location, unknown, unknown, unknown, unknown, unknown);
     }
 
     private static FilterAssessment filter(FilterStatus status) {

@@ -1,5 +1,6 @@
 package com.ororura.analyzer.api;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import org.springframework.http.HttpStatus;
@@ -49,7 +50,7 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleValidation(ConstraintViolationException exception) {
         String message = exception.getConstraintViolations().stream()
                 .findFirst()
-                .map(violation -> violation.getMessage())
+                .map(ConstraintViolation::getMessage)
                 .orElse("Invalid request");
         return ResponseEntity.badRequest().body(ApiErrorResponse.of("INVALID_QUERY", message));
     }

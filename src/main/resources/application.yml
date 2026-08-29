@@ -40,7 +40,7 @@ app:
   ai:
     default-provider: ${AI_DEFAULT_PROVIDER:POLZA}
     codex:
-      enabled: ${CODEX_ENABLED:false}
+      enabled: ${CODEX_ENABLED:true}
       executable: ${CODEX_EXECUTABLE:codex}
       model: ${CODEX_MODEL:}
       timeout: ${CODEX_TIMEOUT:120s}

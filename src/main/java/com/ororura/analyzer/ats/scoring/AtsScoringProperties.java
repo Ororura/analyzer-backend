@@ -1,12 +1,12 @@
-package com.ororura.analyzer.ats;
+package com.ororura.analyzer.ats.scoring;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.ororura.analyzer.ats.domain.MatchingAssessment.TechnologyStatus;
+import com.ororura.analyzer.ats.domain.MatchingAssessment.TechnologyTier;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy;
-import static com.ororura.analyzer.ats.AtsModels.TechnologyStatus;
-import static com.ororura.analyzer.ats.AtsModels.TechnologyTier;
 
 public final class AtsScoringProperties {
 

@@ -7,12 +7,13 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.ororura.analyzer.codex.CodexCliAvailabilityChecker;
+import com.ororura.analyzer.codex.CodexCommandFactory;
 import com.ororura.analyzer.codex.CodexCliProperties;
 import com.ororura.analyzer.codex.ProcessRunner;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
@@ -77,10 +78,38 @@ class CodexCliAiProviderTests {
         assertCode(provider(timeout), ResumeErrorCode.AI_TIMEOUT);
         assertThat(timeoutDirectory.get()).doesNotExist();
 
+        AtomicReference<Path> startFailureDirectory = new AtomicReference<>();
         ProcessRunner startFailure = request -> {
+            startFailureDirectory.set(request.workingDirectory());
             throw new ProcessRunner.StartException(new IOException("missing"));
         };
         assertCode(provider(startFailure), ResumeErrorCode.AI_PROCESS_START_FAILED);
+        assertThat(startFailureDirectory.get()).doesNotExist();
+    }
+
+    @Test
+    void mapsExecutionFailureAndCleansFiles() {
+        AtomicReference<Path> directory = new AtomicReference<>();
+        ProcessRunner runner = request -> {
+            directory.set(request.workingDirectory());
+            throw new ProcessRunner.ExecutionException("failed while reading process output", null);
+        };
+
+        assertCode(provider(runner), ResumeErrorCode.AI_PROVIDER_FAILED);
+        assertThat(directory.get()).doesNotExist();
+    }
+
+    @Test
+    void rejectsOversizedResultAndCleansFiles() {
+        AtomicReference<Path> directory = new AtomicReference<>();
+        ProcessRunner runner = request -> {
+            directory.set(request.workingDirectory());
+            writeResult(request, "x".repeat(1024 * 1024 + 1));
+            return ProcessRunner.ProcessResult.completed(0, "", "");
+        };
+
+        assertCode(provider(runner), ResumeErrorCode.AI_INVALID_RESPONSE);
+        assertThat(directory.get()).doesNotExist();
     }
 
     @Test
@@ -138,8 +167,14 @@ class CodexCliAiProviderTests {
                 Duration.ofSeconds(5), maxConcurrentProcesses);
         CodexCliAvailabilityChecker checker = mock(CodexCliAvailabilityChecker.class);
         when(checker.isAvailable()).thenReturn(true);
-        return new CodexCliAiProvider(properties, checker, runner, new ResumeAnalysisPromptFactory(objectMapper),
-                new LlmResponseParser(objectMapper), objectMapper);
+        return new CodexCliAiProvider(
+                properties,
+                checker,
+                runner,
+                new CodexCommandFactory(properties),
+                new ResumeAnalysisPromptFactory(objectMapper),
+                new LlmResponseParser(objectMapper),
+                objectMapper);
     }
 
     private static void writeResult(ProcessRunner.ProcessRequest request, String content)
