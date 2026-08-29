@@ -22,6 +22,7 @@ public record ResumeAnalysisResult(
         List<String> weaknesses,
         List<String> atsIssues,
         List<String> recommendations,
+        VacancyFit vacancyFit,
         Market market,
         Metadata metadata,
         List<String> warnings) {
@@ -32,6 +33,16 @@ public record ResumeAnalysisResult(
         atsIssues = List.copyOf(atsIssues);
         recommendations = List.copyOf(recommendations);
         warnings = List.copyOf(warnings);
+    }
+
+    public ResumeAnalysisResult(String targetRole, CandidateLevel detectedLevel, Scores scores, int overallScore,
+            int candidateStrength, InterviewChance hrScreeningChance, InterviewChance technicalInterviewChance,
+            Experience experience, Skills skills, List<String> strengths, List<String> weaknesses,
+            List<String> atsIssues, List<String> recommendations, Market market, Metadata metadata,
+            List<String> warnings) {
+        this(targetRole, detectedLevel, scores, overallScore, candidateStrength, hrScreeningChance,
+                technicalInterviewChance, experience, skills, strengths, weaknesses, atsIssues, recommendations,
+                null, market, metadata, warnings);
     }
 
     public record Scores(
@@ -61,6 +72,23 @@ public record ResumeAnalysisResult(
     }
 
     public record Market(String source, int sampleSize) {
+    }
+
+    public record VacancyFit(
+            List<String> requiredSkills,
+            List<String> optionalSkills,
+            List<String> missingSkills,
+            int experienceRelevanceScore,
+            String candidateLevelFit,
+            List<String> risks,
+            List<String> probableRejectionReasons) {
+        public VacancyFit {
+            requiredSkills = List.copyOf(requiredSkills);
+            optionalSkills = List.copyOf(optionalSkills);
+            missingSkills = List.copyOf(missingSkills);
+            risks = List.copyOf(risks);
+            probableRejectionReasons = List.copyOf(probableRejectionReasons);
+        }
     }
 
     public record Metadata(String analysisVersion, String baselineVersion, Instant generatedAt,

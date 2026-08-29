@@ -13,6 +13,8 @@ import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.LlmResponseValidator;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
+import com.ororura.analyzer.resume.api.VacancyAnalysisMode;
+import com.ororura.analyzer.resume.api.VacancyAnalysisRequest;
 import com.ororura.analyzer.resume.config.ResumeAnalysisProperties;
 import com.ororura.analyzer.resume.config.AiProperties;
 import com.ororura.analyzer.resume.domain.*;
@@ -21,6 +23,8 @@ import com.ororura.analyzer.resume.pdf.PdfTextExtractor;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
 import com.ororura.analyzer.vacancy.VacancyMarketService;
+import com.ororura.analyzer.vacancy.SelectionMode;
+import com.ororura.analyzer.vacancy.VacancySelection;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
@@ -51,6 +55,12 @@ class ResumeAnalysisServiceTests {
         when(fileValidator.validate(file)).thenReturn(bytes);
         when(extractor.extract(bytes)).thenReturn(text);
         when(marketService.load("Java Backend Developer")).thenReturn(market);
+        VacancyAnalysisRequest selectedRequest = new VacancyAnalysisRequest(VacancyAnalysisMode.SELECTED_VACANCIES,
+                null, new VacancySelection(SelectionMode.SELECTED, List.of("hh-1", "hh-2"), null, List.of()));
+        VacancyAnalysisRequest singleRequest = new VacancyAnalysisRequest(
+                VacancyAnalysisMode.SINGLE_VACANCY, "hh-1", null);
+        when(marketService.load(selectedRequest, "Java Backend Developer")).thenReturn(market);
+        when(marketService.load(singleRequest, "Java Backend Developer")).thenReturn(market);
         when(polza.analyze(text, market)).thenReturn(llm());
         when(codex.analyze(text, market)).thenReturn(llm());
         AiProviderRegistry registry = new AiProviderRegistry(List.of(polza, codex),
@@ -65,6 +75,8 @@ class ResumeAnalysisServiceTests {
 
         ResumeAnalysisResult result = service.analyze(file, AiProviderType.POLZA);
         ResumeAnalysisResult codexResult = service.analyze(file, AiProviderType.CODEX_CLI);
+        ResumeAnalysisResult selectedResult = service.analyze(file, AiProviderType.POLZA, selectedRequest);
+        ResumeAnalysisResult singleResult = service.analyze(file, AiProviderType.POLZA, singleRequest);
 
         assertThat(result.experience()).isEqualTo(new ResumeAnalysisResult.Experience(16, 1, 4));
         assertThat(result.scores().commercialExperience()).isEqualTo(7);
@@ -84,6 +96,11 @@ class ResumeAnalysisServiceTests {
         assertThat(codexResult.detectedLevel()).isEqualTo(result.detectedLevel());
         assertThat(codexResult.hrScreeningChance()).isEqualTo(result.hrScreeningChance());
         assertThat(codexResult.technicalInterviewChance()).isEqualTo(result.technicalInterviewChance());
+        assertThat(selectedResult.scores()).isEqualTo(result.scores());
+        assertThat(singleResult.scores()).isEqualTo(result.scores());
+        assertThat(singleResult.vacancyFit().requiredSkills()).contains("Java", "Spring Boot");
+        assertThat(singleResult.vacancyFit().experienceRelevanceScore()).isEqualTo(7);
+        assertThat(singleResult.vacancyFit().risks()).containsExactly("weakness");
     }
 
     @Test

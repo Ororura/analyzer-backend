@@ -48,7 +48,8 @@ public class ResumeAnalysisController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResumeAnalysisResult analyze(
             @RequestPart("file") @Schema(type = "string", format = "binary") MultipartFile file,
-            @RequestParam(name = "provider", required = false) AiProviderType provider) {
-        return service.analyze(file, provider);
+            @RequestParam(name = "provider", required = false) AiProviderType provider,
+            @RequestPart(name = "analysis", required = false) VacancyAnalysisRequest analysis) {
+        return analysis == null ? service.analyze(file, provider) : service.analyze(file, provider, analysis);
     }
 }

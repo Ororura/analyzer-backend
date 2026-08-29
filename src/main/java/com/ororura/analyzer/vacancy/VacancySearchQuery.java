@@ -17,4 +17,10 @@ public record VacancySearchQuery(
         employment = employment == null ? List.of() : List.copyOf(employment);
         schedule = schedule == null ? List.of() : List.copyOf(schedule);
     }
+
+    public VacancySearchCriteria toCriteria() {
+        return new VacancySearchCriteria(text, null, location, null, experience, null, null,
+                salary, null, null, salary == null ? null : true, List.of(), null, null,
+                page, perPage, employment, schedule);
+    }
 }

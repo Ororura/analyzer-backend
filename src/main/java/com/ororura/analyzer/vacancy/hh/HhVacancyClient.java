@@ -6,7 +6,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import com.ororura.analyzer.vacancy.VacancySearchQuery;
+import com.ororura.analyzer.vacancy.VacancyProvider;
+import com.ororura.analyzer.vacancy.VacancyProviderSearchResult;
+import com.ororura.analyzer.vacancy.VacancySearchCriteria;
 import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
 import com.ororura.analyzer.vacancy.hh.HhLocationResolver.ResolvedQuery;
 import com.ororura.analyzer.vacancy.hh.dto.HhDtos.SearchPage;
@@ -16,7 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class HhVacancyClient {
+public class HhVacancyClient implements VacancyProvider {
 
     private static final int DETAIL_CONCURRENCY = 4;
 
@@ -33,27 +35,43 @@ public class HhVacancyClient {
         this.mapper = mapper;
     }
 
-    public SearchResult search(VacancySearchQuery query) {
-        ResolvedQuery resolved = HhLocationResolver.resolve(query.text(), query.location());
+    @Override
+    public VacancyProviderSearchResult search(VacancySearchCriteria query) {
+        ResolvedQuery resolved = HhLocationResolver.resolve(query.query(), query.area());
         SearchPage searchPage = searchHh(query, resolved);
         List<SourceVacancy> matchingItems = searchPage.items().stream()
                 .filter(item -> HhLocationResolver.matchesFallback(item.location(), resolved.fallbackLocation()))
                 .toList();
         List<DetailResult> details = loadDetails(matchingItems);
-        return new SearchResult(
+        return new VacancyProviderSearchResult(
                 details.stream().map(DetailResult::vacancy).toList(),
                 searchPage.totalPages(),
+                searchPage.totalElements(),
                 searchPage.hasNext(),
                 details.stream().map(DetailResult::warning).filter(Objects::nonNull).toList());
     }
 
-    private SearchPage searchHh(VacancySearchQuery query, ResolvedQuery resolved) {
+    private SearchPage searchHh(VacancySearchCriteria query, ResolvedQuery resolved) {
         try {
             String html = restClient.get()
                     .uri(HhSearchUriBuilder.build(query, resolved))
                     .retrieve()
                     .body(String.class);
-            return parser.parseSearch(html, query.page(), query.perPage());
+            return parser.parseSearch(html, query.page(), query.pageSize());
+        } catch (RuntimeException exception) {
+            throw HhExceptionMapper.map(exception);
+        }
+    }
+
+    @Override
+    public Vacancy getById(String vacancyId) {
+        String sourceId = vacancyId != null && vacancyId.startsWith("hh-") ? vacancyId.substring(3) : vacancyId;
+        if (sourceId == null || sourceId.isBlank()) {
+            throw HhExceptionMapper.error("INVALID_QUERY", "vacancyId обязателен", 400, null, null);
+        }
+        try {
+            String html = restClient.get().uri("/vacancy/{id}", sourceId).retrieve().body(String.class);
+            return mapper.toDomain(parser.parseDetail(html, sourceId));
         } catch (RuntimeException exception) {
             throw HhExceptionMapper.map(exception);
         }
@@ -94,9 +112,6 @@ public class HhVacancyClient {
             throw HhExceptionMapper.error(
                     "UPSTREAM", "Не удалось загрузить детали вакансии", 502, null, exception);
         }
-    }
-
-    public record SearchResult(List<Vacancy> items, Integer totalPages, boolean hasNext, List<String> warnings) {
     }
 
     private record DetailResult(Vacancy vacancy, String warning) {

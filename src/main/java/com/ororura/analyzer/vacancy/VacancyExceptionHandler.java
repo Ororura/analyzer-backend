@@ -12,7 +12,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import static com.ororura.analyzer.vacancy.api.VacancyDtos.VacancyError;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@RestControllerAdvice(assignableTypes = VacancyController.class)
+@RestControllerAdvice(assignableTypes = {VacancyController.class, com.ororura.analyzer.vacancy.api.VacancyMarketController.class})
 public class VacancyExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -24,6 +24,11 @@ public class VacancyExceptionHandler {
     @ExceptionHandler(InvalidVacancyQueryException.class)
     public ResponseEntity<VacancyError> handleInvalidQuery(InvalidVacancyQueryException exception) {
         return ResponseEntity.badRequest().body(new VacancyError("INVALID_QUERY", exception.getMessage()));
+    }
+
+    @ExceptionHandler(VacancySelectionException.class)
+    public ResponseEntity<VacancyError> handleInvalidSelection(VacancySelectionException exception) {
+        return ResponseEntity.badRequest().body(new VacancyError("INVALID_SELECTION", exception.getMessage()));
     }
 
     @ExceptionHandler(VacancySourceException.class)

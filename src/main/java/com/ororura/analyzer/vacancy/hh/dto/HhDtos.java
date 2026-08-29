@@ -9,7 +9,7 @@ public final class HhDtos {
     private HhDtos() {
     }
 
-    public record SearchPage(List<SourceVacancy> items, Integer totalPages, boolean hasNext) {
+    public record SearchPage(List<SourceVacancy> items, Integer totalPages, Long totalElements, boolean hasNext) {
         public SearchPage {
             items = List.copyOf(items);
         }

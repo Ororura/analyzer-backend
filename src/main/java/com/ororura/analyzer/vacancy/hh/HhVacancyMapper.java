@@ -26,7 +26,7 @@ public final class HhVacancyMapper {
                 source.experience(),
                 source.employment(),
                 source.schedule(),
-                source.workFormat(),
+                canonicalWorkFormat(source.workFormat(), source.schedule()),
                 "hh.ru",
                 source.publishedAt(),
                 Instant.now().toString());
@@ -54,5 +54,14 @@ public final class HhVacancyMapper {
 
     private static String valueOr(String value, String fallback) {
         return value != null && !value.isBlank() ? value : fallback;
+    }
+
+    private static String canonicalWorkFormat(String workFormat, String schedule) {
+        String value = ((workFormat == null ? "" : workFormat) + " " + (schedule == null ? "" : schedule))
+                .toLowerCase(java.util.Locale.ROOT);
+        if (value.contains("hybrid") || value.contains("гибрид")) return "HYBRID";
+        if (value.contains("remote") || value.contains("удален") || value.contains("удалён")) return "REMOTE";
+        if (!value.isBlank()) return "OFFICE";
+        return null;
     }
 }

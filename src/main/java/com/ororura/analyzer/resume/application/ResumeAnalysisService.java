@@ -12,6 +12,8 @@ import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.LlmResponseValidator;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
+import com.ororura.analyzer.resume.api.VacancyAnalysisRequest;
+import com.ororura.analyzer.resume.api.VacancyAnalysisMode;
 import com.ororura.analyzer.resume.config.ResumeAnalysisProperties;
 import com.ororura.analyzer.resume.domain.AtsScoreCalculator;
 import com.ororura.analyzer.resume.domain.AtsScoreCalculator.AtsScore;
@@ -30,6 +32,8 @@ import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
 import com.ororura.analyzer.vacancy.VacancyMarketService;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
+import com.ororura.analyzer.vacancy.VacancySelectionException;
+import com.ororura.analyzer.vacancy.hh.VacancySourceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -84,11 +88,28 @@ public class ResumeAnalysisService {
     }
 
     public ResumeAnalysisResult analyze(MultipartFile file, AiProviderType requestedProvider) {
+        return analyze(file, requestedProvider, VacancyAnalysisRequest.autoMarket());
+    }
+
+    public ResumeAnalysisResult analyze(MultipartFile file, AiProviderType requestedProvider,
+            VacancyAnalysisRequest vacancyAnalysis) {
         String analysisId = UUID.randomUUID().toString();
         Instant started = clock.instant();
         log.info("resume analysis started analysisId={} fileSize={}", analysisId, file == null ? 0 : file.getSize());
         try {
-            return analyze(file, requestedProvider, analysisId, started);
+            return analyze(file, requestedProvider, vacancyAnalysis, analysisId, started);
+        } catch (VacancySelectionException exception) {
+            ResumeErrorCode code = exception.getMessage().contains("maximumProcessingSize")
+                    ? ResumeErrorCode.SELECTION_TOO_LARGE : ResumeErrorCode.INVALID_SELECTION;
+            throw new ResumeAnalysisException(code, exception.getMessage(), exception);
+        } catch (VacancySourceException exception) {
+            ResumeErrorCode code = switch (exception.getCode()) {
+                case "NOT_FOUND" -> ResumeErrorCode.VACANCY_NOT_FOUND;
+                case "RATE_LIMITED" -> ResumeErrorCode.VACANCY_RATE_LIMITED;
+                case "TIMEOUT" -> ResumeErrorCode.VACANCY_PROVIDER_TIMEOUT;
+                default -> ResumeErrorCode.VACANCY_PROVIDER_FAILED;
+            };
+            throw new ResumeAnalysisException(code, exception.getMessage(), exception);
         } catch (ResumeAnalysisException exception) {
             log.warn("resume analysis failed analysisId={} category={}", analysisId, exception.getCode());
             throw exception;
@@ -99,7 +120,7 @@ public class ResumeAnalysisService {
     }
 
     private ResumeAnalysisResult analyze(MultipartFile file, AiProviderType requestedProvider,
-            String analysisId, Instant started) {
+            VacancyAnalysisRequest vacancyAnalysis, String analysisId, Instant started) {
         byte[] pdf = fileValidator.validate(file);
         log.info("pdf validated analysisId={} fileSize={}", analysisId, pdf.length);
         String text = textExtractor.extract(pdf);
@@ -109,7 +130,11 @@ public class ResumeAnalysisService {
                     "Extracted resume text exceeds the configured size limit");
         }
         AiProvider aiProvider = aiProviderRegistry.get(requestedProvider);
-        VacancyMarketData market = marketService.load(properties.targetRole());
+        VacancyAnalysisMode mode = vacancyAnalysis == null || vacancyAnalysis.mode() == null
+                ? VacancyAnalysisMode.AUTO_MARKET : vacancyAnalysis.mode();
+        VacancyMarketData market = mode == VacancyAnalysisMode.AUTO_MARKET
+                ? marketService.load(properties.targetRole())
+                : marketService.load(vacancyAnalysis, properties.targetRole());
         log.info("market context resolved analysisId={} source={} sampleSize={}",
                 analysisId, market.source(), market.sampleSize());
         LlmResumeAnalysisResponse llm = aiProvider.analyze(text, market);

@@ -59,6 +59,24 @@ class ResumeAnalysisEndpointTests {
     }
 
     @Test
+    void acceptsExplicitSelectedVacanciesAnalysis() throws Exception {
+        when(service.analyze(any(), nullable(AiProviderType.class), any(VacancyAnalysisRequest.class)))
+                .thenReturn(result());
+        MockMultipartFile file = new MockMultipartFile("file", "resume.pdf", "application/pdf", "%PDF-test".getBytes());
+        MockMultipartFile analysis = new MockMultipartFile("analysis", "", "application/json", """
+                {"mode":"SELECTED_VACANCIES","selection":{"mode":"SELECTED","vacancyIds":["hh-1","hh-2"]}}
+                """.getBytes());
+
+        mockMvc.perform(multipart("/api/resume/analyze").file(file).file(analysis))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.overallScore").value(76));
+
+        verify(service).analyze(any(), eq(null), org.mockito.ArgumentMatchers.argThat(request ->
+                request.mode() == VacancyAnalysisMode.SELECTED_VACANCIES
+                        && request.selection().vacancyIds().equals(List.of("hh-1", "hh-2"))));
+    }
+
+    @Test
     void exposesProviderAvailabilityWithoutSensitiveReasons() throws Exception {
         mockMvc.perform(get("/api/ai/providers"))
                 .andExpect(status().isOk())

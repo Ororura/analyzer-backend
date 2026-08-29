@@ -109,6 +109,47 @@ class VacancyEndpointIntegrationTests {
         assertThat(SEARCH_QUERIES.getFirst()).contains("page=1", "items_on_page=5");
     }
 
+    @Test
+    void supportsExtendedProviderAndBackendFilters() throws Exception {
+        mockMvc.perform(get("/api/vacancies")
+                        .param("query", "Java")
+                        .param("employer", "Acme")
+                        .param("workFormat", "REMOTE")
+                        .param("salaryFrom", "100000")
+                        .param("salaryTo", "250000")
+                        .param("currency", "RUR")
+                        .param("salaryOnly", "true")
+                        .param("technologies", "spring-boot")
+                        .param("publishedFrom", "2026-08-01")
+                        .param("sort", "DATE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].company").value("Acme"))
+                .andExpect(jsonPath("$.items[0].workFormat").value("REMOTE"))
+                .andExpect(jsonPath("$.totalElements").value(60));
+
+        assertThat(SEARCH_QUERIES.getFirst()).contains("only_with_salary=true", "currency=RUR",
+                "date_from=2026-08-01", "order_by=publication_time", "work_format=REMOTE",
+                "text=Java spring-boot");
+    }
+
+    @Test
+    void returnsFullVacancyDetails() throws Exception {
+        mockMvc.perform(get("/api/vacancies/42"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("hh-42"))
+                .andExpect(jsonPath("$.description").value("Разрабатывать backend-сервисы"))
+                .andExpect(jsonPath("$.skills[1]").value("Spring Boot"))
+                .andExpect(jsonPath("$.workFormat").value("REMOTE"))
+                .andExpect(jsonPath("$.source").value("hh.ru"));
+    }
+
+    @Test
+    void mapsMissingVacancyDetailsToNotFound() throws Exception {
+        mockMvc.perform(get("/api/vacancies/missing"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
             "/api/vacancies?page=wrong",

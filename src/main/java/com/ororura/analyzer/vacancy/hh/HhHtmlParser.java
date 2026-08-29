@@ -44,7 +44,9 @@ public final class HhHtmlParser {
         boolean hasNext = next.isObject()
                 ? !next.path("disabled").asBoolean(false)
                 : totalPages != null && page + 1 < totalPages;
-        return new SearchPage(items, totalPages, hasNext);
+        JsonNode total = result.path("totalResults");
+        Long totalElements = total.canConvertToLong() ? total.asLong() : null;
+        return new SearchPage(items, totalPages, totalElements, hasNext);
     }
 
     SourceVacancy parseDetail(String html, String expectedId) {
