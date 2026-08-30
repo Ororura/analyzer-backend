@@ -1,6 +1,8 @@
 package com.ororura.analyzer.vacancy.requirement;
 
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
 import com.ororura.analyzer.resume.market.MarketRequirement;
@@ -13,6 +15,7 @@ public record MarketRequirementStatistics(
         int processedCount,
         int failedCount,
         boolean sufficientSample,
+        List<VacancyRequirements> vacancyRequirements,
         List<RequirementStatistics> requirements) {
 
     public MarketRequirementStatistics {
@@ -20,7 +23,38 @@ public record MarketRequirementStatistics(
                 || sampleSize != processedCount || fetchedCount != processedCount + failedCount) {
             throw new IllegalArgumentException("Market requirement sample accounting is inconsistent");
         }
+        vacancyRequirements = List.copyOf(vacancyRequirements);
         requirements = List.copyOf(requirements);
+        if (vacancyRequirements.size() != processedCount) {
+            throw new IllegalArgumentException("Vacancy requirement mapping must cover every processed vacancy");
+        }
+        Set<String> vacancyIds = new HashSet<>();
+        if (vacancyRequirements.stream().anyMatch(value -> !vacancyIds.add(value.vacancyId()))) {
+            throw new IllegalArgumentException("Vacancy requirement mapping contains duplicate vacancy ids");
+        }
+        Set<String> requirementIds = requirements.stream()
+                .map(RequirementStatistics::id).collect(java.util.stream.Collectors.toUnmodifiableSet());
+        if (vacancyRequirements.stream().flatMap(value -> value.requirements().stream())
+                .anyMatch(value -> !requirementIds.contains(value.requirementId()))) {
+            throw new IllegalArgumentException("Vacancy mapping references unknown market requirement");
+        }
+    }
+
+    public record VacancyRequirements(String vacancyId, List<MappedRequirement> requirements) {
+        public VacancyRequirements {
+            if (vacancyId == null || vacancyId.isBlank() || requirements == null) {
+                throw new IllegalArgumentException("Vacancy requirement mapping is invalid");
+            }
+            requirements = List.copyOf(requirements);
+        }
+    }
+
+    public record MappedRequirement(String requirementId, RequirementImportance importance) {
+        public MappedRequirement {
+            if (requirementId == null || requirementId.isBlank() || importance == null) {
+                throw new IllegalArgumentException("Mapped market requirement is invalid");
+            }
+        }
     }
 
     public record RequirementStatistics(

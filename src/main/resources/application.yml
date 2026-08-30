@@ -80,6 +80,9 @@ app:
       minimum-sample-size: ${RESUME_MARKET_MINIMUM_SAMPLE_SIZE:30}
       batch-size: ${RESUME_MARKET_BATCH_SIZE:5}
       max-retries: ${RESUME_MARKET_MAX_RETRIES:2}
+      criteria:
+        minimum-count: ${RESUME_MARKET_CRITERIA_MINIMUM_COUNT:6}
+        maximum-count: ${RESUME_MARKET_CRITERIA_MAXIMUM_COUNT:10}
   ai:
     default-provider: ${AI_DEFAULT_PROVIDER:POLZA}
     codex:

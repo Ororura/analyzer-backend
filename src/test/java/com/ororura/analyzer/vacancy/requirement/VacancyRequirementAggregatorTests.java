@@ -36,6 +36,8 @@ class VacancyRequirementAggregatorTests {
             assertThat(value.preferredFrequency()).isCloseTo(1.0 / 3, org.assertj.core.data.Offset.offset(1e-12));
             assertThat(value.optionalFrequency()).isCloseTo(1.0 / 3, org.assertj.core.data.Offset.offset(1e-12));
         });
+        assertThat(result.vacancyRequirements()).hasSize(3)
+                .allSatisfy(mapping -> assertThat(mapping.requirements()).hasSize(1));
     }
 
     @Test

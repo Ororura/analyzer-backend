@@ -8,6 +8,8 @@ import java.util.Map;
 
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
 import com.ororura.analyzer.vacancy.requirement.MarketRequirementStatistics.RequirementStatistics;
+import com.ororura.analyzer.vacancy.requirement.MarketRequirementStatistics.MappedRequirement;
+import com.ororura.analyzer.vacancy.requirement.MarketRequirementStatistics.VacancyRequirements;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -45,9 +47,19 @@ class VacancyRequirementAggregator {
                             .thenComparing(RequirementStatistics::id))
                     .forEach(requirements::add);
         }
+        java.util.Set<String> retainedIds = requirements.stream()
+                .map(RequirementStatistics::id).collect(java.util.stream.Collectors.toUnmodifiableSet());
+        List<VacancyRequirements> mappings = processedVacancies.stream()
+                .map(vacancy -> new VacancyRequirements(vacancy.vacancyId(), vacancy.requirements().stream()
+                        .filter(requirement -> retainedIds.contains(requirement.id()))
+                        .collect(java.util.stream.Collectors.toMap(CanonicalRequirement::id,
+                                requirement -> new MappedRequirement(requirement.id(), requirement.importance()),
+                                VacancyRequirementAggregator::strongerMapping, LinkedHashMap::new))
+                        .values().stream().toList()))
+                .toList();
         int failedCount = fetchedCount - processedCount;
         return new MarketRequirementStatistics(profile, fetchedCount, processedCount, processedCount,
-                failedCount, processedCount >= properties.minimumSampleSize(), requirements);
+                failedCount, processedCount >= properties.minimumSampleSize(), mappings, requirements);
     }
 
     private static CanonicalRequirement stronger(CanonicalRequirement first, CanonicalRequirement second) {
@@ -60,6 +72,10 @@ class VacancyRequirementAggregator {
             case PREFERRED -> 2;
             case OPTIONAL -> 1;
         };
+    }
+
+    private static MappedRequirement strongerMapping(MappedRequirement first, MappedRequirement second) {
+        return rank(second.importance()) > rank(first.importance()) ? second : first;
     }
 
     private static double frequency(int count, int processedCount) {
