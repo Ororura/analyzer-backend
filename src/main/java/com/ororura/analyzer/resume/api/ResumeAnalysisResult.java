@@ -5,7 +5,9 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.ororura.analyzer.resume.ai.AiProviderType;
-import com.ororura.analyzer.resume.ai.SemanticAssessment;
+import com.ororura.analyzer.resume.ai.CriterionAssessment;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
+import com.ororura.analyzer.resume.market.MarketProfileSource;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(name = "ResumeAnalysisResult")
@@ -47,13 +49,13 @@ public record ResumeAnalysisResult(
     }
 
     public record Scores(
-            List<SemanticAssessment> semanticScores,
+            List<CriterionAssessment> assessments,
             int commercialExperience,
             int experienceDescription,
             int ats,
             int resumeQuality) {
         public Scores {
-            semanticScores = List.copyOf(semanticScores);
+            assessments = List.copyOf(assessments);
         }
     }
 
@@ -88,12 +90,18 @@ public record ResumeAnalysisResult(
         }
     }
 
-    public record Metadata(String analysisVersion, String baselineVersion, String marketProfileVersion,
-            Instant generatedAt, AiProviderType provider, String model) {
+    public record Metadata(ResumeAnalysisProfile analysisProfile, String analysisVersion,
+            String baselineVersion, String marketProfileVersion,
+            MarketProfileSource marketProfileSource, Instant generatedAt, AiProviderType provider, String model) {
+
+        public Metadata(String analysisVersion, String baselineVersion, String marketProfileVersion,
+                Instant generatedAt, AiProviderType provider, String model) {
+            this(null, analysisVersion, baselineVersion, marketProfileVersion, null, generatedAt, provider, model);
+        }
 
         public Metadata(String analysisVersion, String baselineVersion, Instant generatedAt,
                 AiProviderType provider, String model) {
-            this(analysisVersion, baselineVersion, null, generatedAt, provider, model);
+            this(null, analysisVersion, baselineVersion, null, null, generatedAt, provider, model);
         }
     }
 

@@ -11,9 +11,12 @@ import com.ororura.analyzer.vacancy.requirement.MarketRequirementStatistics.Requ
 import com.ororura.analyzer.vacancy.requirement.MarketRequirementStatistics.MappedRequirement;
 import com.ororura.analyzer.vacancy.requirement.MarketRequirementStatistics.VacancyRequirements;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 class VacancyRequirementAggregator {
+    private static final Logger log = LoggerFactory.getLogger(VacancyRequirementAggregator.class);
 
     private final MarketRequirementProperties properties;
 
@@ -58,6 +61,8 @@ class VacancyRequirementAggregator {
                         .values().stream().toList()))
                 .toList();
         int failedCount = fetchedCount - processedCount;
+        log.info("Vacancy requirements aggregated profile={} fetched={} processed={} failed={} uniqueRequirements={} requirementsAfterFiltering={}",
+                profile, fetchedCount, processedCount, failedCount, counts.size(), requirements.size());
         return new MarketRequirementStatistics(profile, fetchedCount, processedCount, processedCount,
                 failedCount, processedCount >= properties.minimumSampleSize(), mappings, requirements);
     }

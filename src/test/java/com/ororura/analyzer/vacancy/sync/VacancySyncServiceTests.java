@@ -24,7 +24,11 @@ class VacancySyncServiceTests {
         VacancySyncService service = new VacancySyncService(provider, persistence,
                 new VacancySyncProperties(true, Duration.ofMinutes(30), Duration.ZERO,
                         "Java", null, 2, 50, 50), mock(VacancyCacheFacade.class),
-                mock(VacancyMarketVersionService.class));
+                mock(VacancyMarketVersionService.class),
+                mock(com.ororura.analyzer.vacancy.requirement.generation.MarketProfileRefreshCoordinator.class),
+                new com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry(java.util.List.of(
+                        new com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile(),
+                        new com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile())));
 
         VacancySyncStats stats = service.synchronize();
 

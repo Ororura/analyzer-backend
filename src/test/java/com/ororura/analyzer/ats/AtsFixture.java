@@ -64,8 +64,19 @@ final class AtsFixture {
     }
 
     static VacancyMarketData baselineMarket() {
-        return new VacancyMarketAggregator(new com.ororura.analyzer.resume.domain.TechnologyTaxonomy())
-                .baseline(new com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile(), null);
+        return new VacancyMarketData("fallback", 0,
+                java.util.Map.ofEntries(java.util.Map.entry("Java", .93), java.util.Map.entry("Spring Boot", .89),
+                        java.util.Map.entry("REST API", .82), java.util.Map.entry("SQL", .81),
+                        java.util.Map.entry("PostgreSQL", .68), java.util.Map.entry("Git", .65),
+                        java.util.Map.entry("Backend development", .90), java.util.Map.entry("Hibernate/JPA", .61),
+                        java.util.Map.entry("Docker", .54), java.util.Map.entry("Testing", .52),
+                        java.util.Map.entry("Maven/Gradle", .49), java.util.Map.entry("Spring Data", .45),
+                        java.util.Map.entry("Spring Security", .39), java.util.Map.entry("Kafka", .41),
+                        java.util.Map.entry("RabbitMQ", .18), java.util.Map.entry("Redis", .27),
+                        java.util.Map.entry("Kubernetes", .19), java.util.Map.entry("Microservices", .35),
+                        java.util.Map.entry("Prometheus", .14), java.util.Map.entry("Grafana", .13),
+                        java.util.Map.entry("Linux", .29), java.util.Map.entry("CI/CD", .31)),
+                java.util.Map.of(), java.util.Map.of(), java.util.Map.of(), java.util.List.of());
     }
 
     static LlmTechnologyAssessment technology(String name, String status, String evidence) {

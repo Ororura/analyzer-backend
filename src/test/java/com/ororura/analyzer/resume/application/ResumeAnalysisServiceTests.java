@@ -14,7 +14,7 @@ import com.ororura.analyzer.resume.ai.LlmResponseValidator;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
-import com.ororura.analyzer.resume.ai.SemanticAssessment;
+import com.ororura.analyzer.resume.ai.CriterionAssessment;
 import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
 import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
@@ -27,8 +27,14 @@ import com.ororura.analyzer.resume.pdf.PdfFileValidator;
 import com.ororura.analyzer.resume.pdf.PdfTextExtractor;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
-import com.ororura.analyzer.resume.market.LegacyMarketAnalysisProfileFallback;
+import com.ororura.analyzer.resume.market.ConfiguredMarketAnalysisProfileFallback;
+import com.ororura.analyzer.resume.market.JavaBackendFallbackMarketProfile;
+import com.ororura.analyzer.resume.market.ReactFrontendFallbackMarketProfile;
+import com.ororura.analyzer.resume.market.ResolvedMarketAnalysisProfile;
+import com.ororura.analyzer.resume.market.MarketProfileSource;
+import com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog;
 import com.ororura.analyzer.resume.market.MarketAnalysisProfileFactory;
+import com.ororura.analyzer.resume.market.MarketAnalysisProfileProvider;
 import com.ororura.analyzer.vacancy.market.VacancyMarketService;
 import com.ororura.analyzer.vacancy.selection.SelectionMode;
 import com.ororura.analyzer.vacancy.selection.VacancySelection;
@@ -50,6 +56,14 @@ class ResumeAnalysisServiceTests {
         Clock clock = Clock.fixed(Instant.parse("2026-08-28T07:00:00Z"), ZoneOffset.UTC);
         ResumeAnalysisProperties properties = new ResumeAnalysisProperties(
                 DataSize.ofMegabytes(10), "Java Backend Developer", "1", "2026-08", 200_000);
+        ResumeAnalysisProfileRegistry profiles = profileRegistry(properties);
+        var catalog = new DefaultAnalysisTechnologyCatalog();
+        var fallback = new ConfiguredMarketAnalysisProfileFallback(profiles, new MarketAnalysisProfileFactory(),
+                List.of(new JavaBackendFallbackMarketProfile(catalog), new ReactFrontendFallbackMarketProfile(catalog)), clock);
+        MarketAnalysisProfileProvider marketProfiles = profile ->
+                new ResolvedMarketAnalysisProfile(fallback.get(profile), MarketProfileSource.FALLBACK);
+        var javaProfile = fallback.get(ResumeAnalysisProfile.JAVA_BACKEND);
+        var reactProfile = fallback.get(ResumeAnalysisProfile.REACT_FRONTEND);
         PdfFileValidator fileValidator = mock(PdfFileValidator.class);
         PdfTextExtractor extractor = mock(PdfTextExtractor.class);
         VacancyMarketService marketService = mock(VacancyMarketService.class);
@@ -73,22 +87,19 @@ class ResumeAnalysisServiceTests {
                 .thenReturn(market);
         when(marketService.load(ResumeAnalysisProfile.JAVA_BACKEND, singleRequest, "Java Backend Developer"))
                 .thenReturn(market);
-        when(polza.analyze(ResumeAnalysisProfile.JAVA_BACKEND, text, market)).thenReturn(llm());
-        when(codex.analyze(ResumeAnalysisProfile.JAVA_BACKEND, text, market)).thenReturn(llm());
-        when(polza.analyze(ResumeAnalysisProfile.REACT_FRONTEND, text, reactMarket)).thenReturn(reactLlm());
+        when(polza.analyze(javaProfile, text, market)).thenReturn(llm());
+        when(codex.analyze(javaProfile, text, market)).thenReturn(llm());
+        when(polza.analyze(reactProfile, text, reactMarket)).thenReturn(reactLlm());
         AiProviderRegistry registry = new AiProviderRegistry(List.of(polza, codex),
                 new AiProperties(AiProviderType.POLZA));
 
         TechnologyTaxonomy taxonomy = new TechnologyTaxonomy();
-        AtsScoreCalculator ats = new AtsScoreCalculator(taxonomy);
-        ResumeAnalysisProfileRegistry profiles = profileRegistry(properties);
-        var fallback = new LegacyMarketAnalysisProfileFallback(
-                profiles, new MarketAnalysisProfileFactory(), clock);
+        AtsScoreCalculator ats = new AtsScoreCalculator();
         ResumeAnalysisService service = new ResumeAnalysisService(fileValidator, extractor, marketService, registry,
                 new LlmResponseValidator(clock), new ExperienceCalculator(), taxonomy, ats,
                 new OverallScoreCalculator(), new CandidateStrengthCalculator(), new CandidateLevelPolicy(),
-                new InterviewChancePolicy(), new ResumeAnalysisAssembler(properties, fallback), properties, clock,
-                profiles);
+                new InterviewChancePolicy(), new ResumeAnalysisAssembler(properties), properties, clock,
+                marketProfiles);
 
         ResumeAnalysisResult result = service.analyze(file, AiProviderType.POLZA);
         ResumeAnalysisResult codexResult = service.analyze(file, AiProviderType.CODEX_CLI);
@@ -99,14 +110,16 @@ class ResumeAnalysisServiceTests {
 
         assertThat(result.experience()).isEqualTo(new ResumeAnalysisResult.Experience(16, 1, 4));
         assertThat(result.scores().commercialExperience()).isEqualTo(7);
-        assertThat(result.scores().ats()).isEqualTo(64);
-        assertThat(result.overallScore()).isEqualTo(68);
+        assertThat(result.scores().ats()).isEqualTo(51);
+        assertThat(result.overallScore()).isEqualTo(66);
         assertThat(result.candidateStrength()).isEqualTo(69);
         assertThat(result.detectedLevel()).isEqualTo(ResumeAnalysisResult.CandidateLevel.JUNIOR_PLUS);
         assertThat(result.hrScreeningChance()).isEqualTo(ResumeAnalysisResult.InterviewChance.MEDIUM);
         assertThat(result.technicalInterviewChance()).isEqualTo(ResumeAnalysisResult.InterviewChance.MEDIUM);
         assertThat(result.metadata().generatedAt()).isEqualTo(Instant.parse("2026-08-28T07:00:00Z"));
         assertThat(result.metadata().provider()).isEqualTo(AiProviderType.POLZA);
+        assertThat(result.metadata().analysisProfile()).isEqualTo(ResumeAnalysisProfile.JAVA_BACKEND);
+        assertThat(result.metadata().marketProfileSource()).isEqualTo(MarketProfileSource.FALLBACK);
         assertThat(result.metadata().marketProfileVersion())
                 .isEqualTo(fallback.get(ResumeAnalysisProfile.JAVA_BACKEND).version())
                 .startsWith("sha256:");
@@ -127,9 +140,9 @@ class ResumeAnalysisServiceTests {
         assertThat(reactResult.metadata().marketProfileVersion())
                 .isEqualTo(fallback.get(ResumeAnalysisProfile.REACT_FRONTEND).version())
                 .isNotEqualTo(result.metadata().marketProfileVersion());
-        assertThat(reactResult.scores().semanticScores()).extracting(SemanticAssessment::criterion)
-                .contains("javascriptDepth", "typescriptDepth", "reactDepth")
-                .doesNotContain("javaDepth", "springDepth");
+        assertThat(reactResult.scores().assessments()).extracting(CriterionAssessment::criterionId)
+                .contains("javascript-fallback", "typescript-fallback", "react-fallback")
+                .doesNotContain("java-fallback", "spring-backend-fallback");
     }
 
     @Test
@@ -149,7 +162,7 @@ class ResumeAnalysisServiceTests {
                 mock(ExperienceCalculator.class), mock(TechnologyTaxonomy.class), mock(AtsScoreCalculator.class),
                 mock(OverallScoreCalculator.class), mock(CandidateStrengthCalculator.class),
                 mock(CandidateLevelPolicy.class), mock(InterviewChancePolicy.class),
-                mock(ResumeAnalysisAssembler.class), properties, clock, profileRegistry(properties));
+                mock(ResumeAnalysisAssembler.class), properties, clock, mock(MarketAnalysisProfileProvider.class));
 
         assertThatThrownBy(() -> service.analyze(file, AiProviderType.CODEX_CLI))
                 .isInstanceOf(ResumeAnalysisException.class)
@@ -168,13 +181,13 @@ class ResumeAnalysisServiceTests {
 
     private static LlmResumeAnalysisResponse llm() {
         return new LlmResumeAnalysisResponse(
-                List.of(assessment("javaDepth", 8), assessment("springDepth", 7),
-                        assessment("backendDepth", 8), assessment("sqlPostgresqlDepth", 7),
-                        assessment("hibernateJpaDepth", 6), assessment("infrastructureDepth", 6),
-                        assessment("messagingCacheDepth", 7), assessment("testingDepth", 6)),
+                List.of(assessment("java-fallback", 8), assessment("spring-backend-fallback", 7),
+                        assessment("backend-architecture-fallback", 8), assessment("persistence-fallback", 7),
+                        assessment("infrastructure-fallback", 6), assessment("testing-fallback", 6)),
                 new LlmResumeAnalysisResponse.ExperienceAssessment(score(7), score(8), score(6)),
                 new LlmResumeAnalysisResponse.ResumeAssessment(score(7), score(8)),
-                new LlmResumeAnalysisResponse.Skills(List.of("Java", "Postgres"), List.of("Docker"), List.of("K8s")),
+                new LlmResumeAnalysisResponse.Skills(
+                        List.of("Java", "PostgreSQL"), List.of("Docker"), List.of("Kubernetes")),
                 List.of(new LlmResumeAnalysisResponse.EmploymentPeriod(
                         "Example", "Java Developer", 2025, 5, null, null, true)),
                 List.of("strength"), List.of("weakness"), List.of("issue"), List.of("recommendation"), List.of());
@@ -182,11 +195,9 @@ class ResumeAnalysisServiceTests {
 
     private static LlmResumeAnalysisResponse reactLlm() {
         return new LlmResumeAnalysisResponse(
-                List.of(assessment("javascriptDepth", 7), assessment("typescriptDepth", 7),
-                        assessment("reactDepth", 8), assessment("frontendDepth", 8),
-                        assessment("htmlCssDepth", 6), assessment("stateManagementDepth", 6),
-                        assessment("webPlatformDepth", 7), assessment("testingDepth", 5),
-                        assessment("frontendArchitectureDepth", 6)),
+                List.of(assessment("javascript-fallback", 7), assessment("typescript-fallback", 7),
+                        assessment("react-fallback", 8), assessment("frontend-platform-fallback", 8),
+                        assessment("state-management-fallback", 6), assessment("frontend-testing-fallback", 5)),
                 new LlmResumeAnalysisResponse.ExperienceAssessment(score(7), score(8), score(6)),
                 new LlmResumeAnalysisResponse.ResumeAssessment(score(7), score(8)),
                 new LlmResumeAnalysisResponse.Skills(List.of("React", "TypeScript"), List.of(), List.of()),
@@ -199,8 +210,8 @@ class ResumeAnalysisServiceTests {
         return new LlmResumeAnalysisResponse.SemanticScore(value, List.of("evidence"));
     }
 
-    private static SemanticAssessment assessment(String criterion, int value) {
-        return new SemanticAssessment(criterion, value, List.of("evidence"));
+    private static CriterionAssessment assessment(String criterion, int value) {
+        return new CriterionAssessment(criterion, value, List.of("evidence"));
     }
 
     private static ResumeAnalysisProfileRegistry profileRegistry(ResumeAnalysisProperties properties) {

@@ -77,15 +77,15 @@ public class LlmResponseParser {
     }
 
     private static void validateRequiredShape(JsonNode root) {
-        required(root, "semanticScores", "experienceAssessment", "resumeAssessment", "skills",
+        required(root, "assessments", "experienceAssessment", "resumeAssessment", "skills",
                 "employmentPeriods", "strengths", "weaknesses", "atsIssues", "recommendations", "warnings");
         required(root.path("experienceAssessment"), "commercialRelevance", "experienceDescriptionQuality",
                 "responsibilityLevel");
         required(root.path("resumeAssessment"), "resumeQuality", "atsReadability");
         required(root.path("skills"), "confirmed", "weakEvidence", "missing");
-        if (!root.path("semanticScores").isArray()) throw new IllegalArgumentException("Expected semanticScores array");
-        for (JsonNode assessment : root.path("semanticScores")) {
-            required(assessment, "criterion", "score", "evidence");
+        if (!root.path("assessments").isArray()) throw new IllegalArgumentException("Expected assessments array");
+        for (JsonNode assessment : root.path("assessments")) {
+            required(assessment, "criterionId", "score", "evidence");
         }
         requireScores(root.path("experienceAssessment"), "commercialRelevance", "experienceDescriptionQuality",
                 "responsibilityLevel");

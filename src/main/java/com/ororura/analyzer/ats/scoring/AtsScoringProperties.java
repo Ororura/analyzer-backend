@@ -6,12 +6,14 @@ import java.util.Map;
 
 import com.ororura.analyzer.ats.domain.MatchingAssessment.TechnologyStatus;
 import com.ororura.analyzer.ats.domain.MatchingAssessment.TechnologyTier;
-import com.ororura.analyzer.resume.domain.TechnologyTaxonomy;
-import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
+import com.ororura.analyzer.resume.domain.LegacyTechnologyTaxonomy;
+import com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
 
 public final class AtsScoringProperties {
 
-    private static final TechnologyTaxonomy TAXONOMY = new TechnologyTaxonomy();
+    private static final LegacyTechnologyTaxonomy TAXONOMY = new LegacyTechnologyTaxonomy();
+    private static final DefaultAnalysisTechnologyCatalog TECHNOLOGIES = new DefaultAnalysisTechnologyCatalog();
 
     public static final Map<TechnologyStatus, Double> TECHNOLOGY_STATUS_WEIGHT = Map.of(
             TechnologyStatus.CONFIRMED_EXPERIENCE, 1.0,
@@ -41,12 +43,12 @@ public final class AtsScoringProperties {
     }
 
     public static String canonicalTechnology(String value) {
-        return TAXONOMY.canonical(JavaBackendAnalysisProfile.technologyDefinitions(), value);
+        return TAXONOMY.canonical(TECHNOLOGIES.technologies(ResumeAnalysisProfile.JAVA_BACKEND), value);
     }
 
     private static Map<String, TechnologyTier> technologyTiers() {
         Map<String, TechnologyTier> tiers = new LinkedHashMap<>();
-        TAXONOMY.tiers(JavaBackendAnalysisProfile.technologyDefinitions())
+        TAXONOMY.tiers(TECHNOLOGIES.technologies(ResumeAnalysisProfile.JAVA_BACKEND))
                 .forEach((technology, tier) -> tiers.put(technology, TechnologyTier.valueOf(tier.name())));
         return Collections.unmodifiableMap(tiers);
     }

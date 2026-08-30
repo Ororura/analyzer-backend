@@ -14,8 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RequirementCanonicalizerTests {
 
     private final RequirementCanonicalizer canonicalizer = new RequirementCanonicalizer(
-            new ResumeAnalysisProfileRegistry(List.of(
-                    new JavaBackendAnalysisProfile(), new ReactFrontendAnalysisProfile())));
+            new com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog());
 
     @Test
     void canonicalizesAliasesAndCaseDeterministically() {

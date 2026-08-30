@@ -3,7 +3,7 @@ package com.ororura.analyzer.resume.ai;
 import java.util.List;
 
 public record LlmResumeAnalysisResponse(
-        List<SemanticAssessment> semanticScores,
+        List<CriterionAssessment> assessments,
         ExperienceAssessment experienceAssessment,
         ResumeAssessment resumeAssessment,
         Skills skills,
@@ -15,7 +15,7 @@ public record LlmResumeAnalysisResponse(
         List<String> warnings) {
 
     public LlmResumeAnalysisResponse {
-        semanticScores = copy(semanticScores, "semanticScores");
+        assessments = copy(assessments, "assessments");
         require(experienceAssessment, "experienceAssessment");
         require(resumeAssessment, "resumeAssessment");
         require(skills, "skills");

@@ -1,5 +1,6 @@
 package com.ororura.analyzer.resume.ai;
 
+import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -15,13 +16,13 @@ public class ResumeAnalysisSchemaFactory {
         this.objectMapper = objectMapper;
     }
 
-    public JsonNode create(LegacyResumeAnalysisProfileDefinition profile) {
+    public JsonNode create(MarketAnalysisProfile profile) {
         ObjectNode properties = objectMapper.createObjectNode();
-        properties.set("semanticScores", semanticScores(profile));
+        properties.set("assessments", assessments(profile));
         properties.set("experienceAssessment", scoredObject("commercialRelevance", "experienceDescriptionQuality",
                 "responsibilityLevel"));
         properties.set("resumeAssessment", scoredObject("resumeQuality", "atsReadability"));
-        properties.set("skills", stringArraysObject("confirmed", "weakEvidence", "missing"));
+        properties.set("skills", skills(profile));
         properties.set("employmentPeriods", employmentPeriods());
         properties.set("strengths", stringArray());
         properties.set("weaknesses", stringArray());
@@ -31,13 +32,13 @@ public class ResumeAnalysisSchemaFactory {
         return closedRequiredObject(properties);
     }
 
-    private ObjectNode semanticScores(LegacyResumeAnalysisProfileDefinition profile) {
+    private ObjectNode assessments(MarketAnalysisProfile profile) {
         ObjectNode properties = objectMapper.createObjectNode();
         ObjectNode criterion = stringType();
         ArrayNode allowed = objectMapper.createArrayNode();
         profile.criteria().forEach(value -> allowed.add(value.id()));
         criterion.set("enum", allowed);
-        properties.set("criterion", criterion);
+        properties.set("criterionId", criterion);
         ObjectNode score = integerType();
         score.put("minimum", 0);
         score.put("maximum", 10);
@@ -49,6 +50,27 @@ public class ResumeAnalysisSchemaFactory {
         result.put("maxItems", profile.criteria().size());
         result.set("items", closedRequiredObject(properties));
         return result;
+    }
+
+    private ObjectNode skills(MarketAnalysisProfile profile) {
+        ObjectNode properties = objectMapper.createObjectNode();
+        properties.set("confirmed", requirementArray(profile, false));
+        properties.set("weakEvidence", requirementArray(profile, false));
+        properties.set("missing", requirementArray(profile, true));
+        return closedRequiredObject(properties);
+    }
+
+    private ObjectNode requirementArray(MarketAnalysisProfile profile, boolean positiveFrequencyOnly) {
+        ObjectNode item = stringType();
+        ArrayNode allowed = objectMapper.createArrayNode();
+        profile.requirements().stream()
+                .filter(value -> !positiveFrequencyOnly || value.frequency() > 0)
+                .forEach(value -> allowed.add(value.label()));
+        item.set("enum", allowed);
+        ObjectNode value = objectMapper.createObjectNode();
+        value.put("type", "array");
+        value.set("items", item);
+        return value;
     }
 
     private ObjectNode scoredObject(String... fields) {
@@ -66,14 +88,6 @@ public class ResumeAnalysisSchemaFactory {
         score.put("maximum", 10);
         properties.set("score", score);
         properties.set("evidence", stringArray());
-        return closedRequiredObject(properties);
-    }
-
-    private ObjectNode stringArraysObject(String... fields) {
-        ObjectNode properties = objectMapper.createObjectNode();
-        for (String field : fields) {
-            properties.set(field, stringArray());
-        }
         return closedRequiredObject(properties);
     }
 

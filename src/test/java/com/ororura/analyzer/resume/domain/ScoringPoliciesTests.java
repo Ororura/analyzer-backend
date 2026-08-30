@@ -4,11 +4,12 @@ import org.junit.jupiter.api.Test;
 
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult.CandidateLevel;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult.InterviewChance;
-import com.ororura.analyzer.resume.ai.SemanticAssessment;
-import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
+import com.ororura.analyzer.resume.ai.CriterionAssessment;
+import com.ororura.analyzer.resume.ai.AnalysisCriterion;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ScoringPoliciesTests {
 
@@ -19,16 +20,42 @@ class ScoringPoliciesTests {
 
     @Test
     void usesDeclaredTechnicalAndOverallWeights() {
-        var criteria = new JavaBackendAnalysisProfile().criteria();
+        var criteria = List.of(
+                new AnalysisCriterion("one", "One", "First", .6, .8),
+                new AnalysisCriterion("two", "Two", "Second", .4, .6));
         assertThat(overall.technicalScore(scores(criteria, 10), criteria)).isEqualTo(100);
         assertThat(overall.technicalScore(scores(criteria, 0), criteria)).isZero();
         assertThat(overall.overall(80, 70, 7, 60, 6)).isEqualTo(73);
         assertThat(strength.calculate(80, 7, 6)).isEqualTo(74);
     }
 
-    private static List<SemanticAssessment> scores(
+    @Test
+    void calculatesCompletelyDifferentCriterionIdsWithoutProfileSpecificKnowledge() {
+        List<AnalysisCriterion> criteria = List.of(
+                new AnalysisCriterion("react", "React", "React delivery", .5, .8),
+                new AnalysisCriterion("typescript", "TypeScript", "Typed frontend", .3, .7),
+                new AnalysisCriterion("frontend-architecture", "Architecture", "Frontend architecture", .2, .4));
+        List<CriterionAssessment> assessments = List.of(
+                new CriterionAssessment("react", 10, List.of()),
+                new CriterionAssessment("typescript", 5, List.of()),
+                new CriterionAssessment("frontend-architecture", 0, List.of()));
+
+        assertThat(overall.technicalScore(assessments, criteria)).isEqualTo(65);
+    }
+
+    @Test
+    void rejectsNonNormalizedProfileWeightsInsteadOfSilentlyRenormalizing() {
+        List<AnalysisCriterion> criteria = List.of(
+                new AnalysisCriterion("one", "One", "First", .4, .5),
+                new AnalysisCriterion("two", "Two", "Second", .4, .5));
+        assertThatThrownBy(() -> overall.technicalScore(scores(criteria, 5), criteria))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("normalized");
+    }
+
+    private static List<CriterionAssessment> scores(
             List<com.ororura.analyzer.resume.ai.AnalysisCriterion> criteria, int score) {
-        return criteria.stream().map(value -> new SemanticAssessment(value.id(), score, List.of())).toList();
+        return criteria.stream().map(value -> new CriterionAssessment(value.id(), score, List.of())).toList();
     }
 
     @Test

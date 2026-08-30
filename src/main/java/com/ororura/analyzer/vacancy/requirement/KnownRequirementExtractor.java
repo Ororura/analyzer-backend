@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.ororura.analyzer.resume.ai.AnalysisTechnology;
-import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
+import com.ororura.analyzer.resume.ai.AnalysisTechnologyCatalog;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
 import com.ororura.analyzer.resume.market.RequirementType;
@@ -16,20 +16,19 @@ import org.springframework.stereotype.Component;
 @Component
 class KnownRequirementExtractor {
 
-    private final ResumeAnalysisProfileRegistry profileRegistry;
+    private final AnalysisTechnologyCatalog technologyCatalog;
     private final RequirementCanonicalizer canonicalizer;
 
-    KnownRequirementExtractor(ResumeAnalysisProfileRegistry profileRegistry,
+    KnownRequirementExtractor(AnalysisTechnologyCatalog technologyCatalog,
             RequirementCanonicalizer canonicalizer) {
-        this.profileRegistry = profileRegistry;
+        this.technologyCatalog = technologyCatalog;
         this.canonicalizer = canonicalizer;
     }
 
     List<ExtractedRequirement> extract(ResumeAnalysisProfile profile, VacancyRequirementInput vacancy) {
-        LegacyResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
         String text = vacancy.title() + "\n" + vacancy.description();
         Map<String, ExtractedRequirement> requirements = new LinkedHashMap<>();
-        for (AnalysisTechnology technology : definition.technologies()) {
+        for (AnalysisTechnology technology : technologyCatalog.technologies(profile)) {
             for (String expression : technology.patterns()) {
                 Matcher matcher = Pattern.compile(expression, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE)
                         .matcher(text);

@@ -1,61 +1,35 @@
 package com.ororura.analyzer.resume.domain;
 
-import java.util.Map;
-
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy.Evidence;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy.TechnologyProfile;
-import com.ororura.analyzer.resume.ai.AnalysisTechnology;
-import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
-import com.ororura.analyzer.vacancy.market.VacancyMarketData;
+import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
+import com.ororura.analyzer.resume.market.MarketRequirement;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AtsScoreCalculator {
 
-    private final TechnologyTaxonomy taxonomy;
-
-    public AtsScoreCalculator(TechnologyTaxonomy taxonomy) {
-        this.taxonomy = taxonomy;
-    }
-
     public AtsScore calculate(int atsReadability, int resumeQuality, int experienceDescription,
-            int commercialExperience, TechnologyProfile technologies, VacancyMarketData market,
-            LegacyResumeAnalysisProfileDefinition profile) {
-        int coverage = coverage(technologies, profile);
-        int relevance = marketRelevance(technologies, market.skillFrequencies(), profile);
+            int commercialExperience, TechnologyProfile technologies, MarketAnalysisProfile profile) {
+        int coverage = weighted(technologies, profile, requirement -> 1.0);
+        int relevance = weighted(technologies, profile, MarketRequirement::frequency);
         int total = ScoreMath.score(atsReadability * 10 * .25 + coverage * .25 + relevance * .20
                 + resumeQuality * 10 * .15 + experienceDescription * 10 * .10
                 + commercialExperience * 10 * .05);
         return new AtsScore(total, coverage, relevance);
     }
 
-    int coverage(TechnologyProfile technologies, LegacyResumeAnalysisProfileDefinition profile) {
-        return weighted(technologies, profile, technology -> 1.0);
-    }
-
-    int marketRelevance(TechnologyProfile technologies, Map<String, Double> frequencies,
-            LegacyResumeAnalysisProfileDefinition profile) {
-        return weighted(technologies, profile, technology -> frequencies.getOrDefault(technology, 0.0));
-    }
-
-    private int weighted(TechnologyProfile technologies, LegacyResumeAnalysisProfileDefinition profile, Weight weight) {
+    private int weighted(TechnologyProfile technologies, MarketAnalysisProfile profile,
+            java.util.function.ToDoubleFunction<MarketRequirement> weight) {
         double earned = 0;
         double available = 0;
-        for (Map.Entry<String, AnalysisTechnology.Tier> technology : taxonomy.tiers(profile).entrySet()) {
-            double currentWeight = tierWeight(technology.getValue()) * weight.value(technology.getKey());
+        for (MarketRequirement requirement : profile.requirements()) {
+            double currentWeight = weight.applyAsDouble(requirement);
             if (currentWeight <= 0) continue;
             available += currentWeight;
-            earned += currentWeight * evidenceWeight(technologies.evidence().get(technology.getKey()));
+            earned += currentWeight * evidenceWeight(technologies.evidence().get(requirement.label()));
         }
         return available == 0 ? 0 : ScoreMath.score(earned / available * 100);
-    }
-
-    private static double tierWeight(AnalysisTechnology.Tier tier) {
-        return switch (tier) {
-            case CORE -> 5;
-            case COMMON -> 2;
-            case BONUS -> .5;
-        };
     }
 
     private static double evidenceWeight(Evidence evidence) {
@@ -66,10 +40,6 @@ public class AtsScoreCalculator {
             case EXPLICIT -> .5;
             case MISSING -> 0;
         };
-    }
-
-    private interface Weight {
-        double value(String technology);
     }
 
     public record AtsScore(int total, int technologyCoverage, int marketRelevance) {

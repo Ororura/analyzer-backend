@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.ororura.analyzer.resume.application.ResumeAnalysisService;
-import com.ororura.analyzer.resume.ai.SemanticAssessment;
+import com.ororura.analyzer.resume.ai.CriterionAssessment;
 import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
@@ -131,7 +131,7 @@ class ResumeAnalysisEndpointTests {
     private static ResumeAnalysisResult result() {
         return new ResumeAnalysisResult("Java Backend Developer", ResumeAnalysisResult.CandidateLevel.JUNIOR_PLUS,
                 new ResumeAnalysisResult.Scores(
-                        List.of(new SemanticAssessment("javaDepth", 8, List.of("evidence"))), 7, 8, 78, 70),
+                        List.of(new CriterionAssessment("criterion-fixture", 8, List.of("evidence"))), 7, 8, 78, 70),
                 76, 77, ResumeAnalysisResult.InterviewChance.HIGH, ResumeAnalysisResult.InterviewChance.HIGH,
                 new ResumeAnalysisResult.Experience(16, 1, 4),
                 new ResumeAnalysisResult.Skills(List.of("Java"), List.of("Docker"), List.of("Kubernetes")),

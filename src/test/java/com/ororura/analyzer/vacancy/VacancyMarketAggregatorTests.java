@@ -8,15 +8,18 @@ import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import com.ororura.analyzer.vacancy.model.Salary;
 import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
 import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
-import com.ororura.analyzer.resume.domain.TechnologyTaxonomy;
+import com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
+import com.ororura.analyzer.resume.domain.LegacyTechnologyTaxonomy;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class VacancyMarketAggregatorTests {
 
-    private final VacancyMarketAggregator aggregator = new VacancyMarketAggregator(new TechnologyTaxonomy());
-    private final JavaBackendAnalysisProfile profile = new JavaBackendAnalysisProfile();
+    private final VacancyMarketAggregator aggregator = new VacancyMarketAggregator(
+            new LegacyTechnologyTaxonomy(), new DefaultAnalysisTechnologyCatalog());
+    private final ResumeAnalysisProfile profile = ResumeAnalysisProfile.JAVA_BACKEND;
 
     @Test
     void canonicalizesAliasesAndCalculatesVacancyShares() {
@@ -33,19 +36,18 @@ class VacancyMarketAggregatorTests {
     }
 
     @Test
-    void returnsBaselineWithWarningForEmptySourceData() {
+    void returnsEmptyMarketWithWarningForEmptySourceData() {
         VacancyMarketData result = aggregator.aggregate(profile, List.of(), List.of("timeout"));
 
-        assertThat(result.source()).isEqualTo("baseline");
+        assertThat(result.source()).isEqualTo("empty");
         assertThat(result.sampleSize()).isZero();
         assertThat(result.warnings()).containsExactly("timeout");
-        assertThat(result.skillFrequencies().get("Java"))
-                .isGreaterThan(result.skillFrequencies().get("Kubernetes"));
+        assertThat(result.skillFrequencies()).isEmpty();
     }
 
     @Test
     void doesNotReuseJavaBaselineForReactProfile() {
-        VacancyMarketData result = aggregator.aggregate(new ReactFrontendAnalysisProfile(), List.of(), List.of());
+        VacancyMarketData result = aggregator.aggregate(ResumeAnalysisProfile.REACT_FRONTEND, List.of(), List.of());
 
         assertThat(result.skillFrequencies()).isEmpty();
         assertThat(result.warnings()).isNotEmpty();

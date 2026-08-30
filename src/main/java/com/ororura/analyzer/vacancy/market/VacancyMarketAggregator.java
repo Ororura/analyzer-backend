@@ -11,31 +11,36 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
-import com.ororura.analyzer.resume.domain.TechnologyTaxonomy;
+import com.ororura.analyzer.resume.ai.AnalysisTechnologyCatalog;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
+import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
+import com.ororura.analyzer.resume.domain.LegacyTechnologyTaxonomy;
 import org.springframework.stereotype.Component;
 
 @Component
 public class VacancyMarketAggregator {
 
-    private final TechnologyTaxonomy taxonomy;
+    private final LegacyTechnologyTaxonomy taxonomy;
+    private final AnalysisTechnologyCatalog technologyCatalog;
 
-    public VacancyMarketAggregator(TechnologyTaxonomy taxonomy) {
+    public VacancyMarketAggregator(LegacyTechnologyTaxonomy taxonomy, AnalysisTechnologyCatalog technologyCatalog) {
         this.taxonomy = taxonomy;
+        this.technologyCatalog = technologyCatalog;
     }
 
-    public VacancyMarketData aggregate(LegacyResumeAnalysisProfileDefinition profile,
+    public VacancyMarketData aggregate(ResumeAnalysisProfile profile,
             List<MarketVacancy> vacancies, List<String> warnings) {
         return aggregate(profile, vacancies, warnings, "live");
     }
 
-    public VacancyMarketData aggregate(LegacyResumeAnalysisProfileDefinition profile,
+    public VacancyMarketData aggregate(ResumeAnalysisProfile profile,
             List<MarketVacancy> vacancies, List<String> warnings, String source) {
         if (vacancies.isEmpty()) {
-            return baseline(profile, warnings.isEmpty() ? "HH.ru не вернул актуальные вакансии" : warnings.getFirst());
+            return empty(warnings.isEmpty() ? "HH.ru не вернул актуальные вакансии" : warnings.getFirst());
         }
 
-        Set<String> technologies = Set.copyOf(taxonomy.tiers(profile).keySet());
+        var definitions = technologyCatalog.technologies(profile);
+        Set<String> technologies = definitions.stream().map(value -> value.name()).collect(java.util.stream.Collectors.toSet());
 
         Map<String, Integer> skillCounts = new LinkedHashMap<>();
         Map<String, Integer> experienceRequirements = new LinkedHashMap<>();
@@ -46,7 +51,7 @@ public class VacancyMarketAggregator {
         for (MarketVacancy vacancy : vacancies) {
             Set<String> vacancySkills = new LinkedHashSet<>();
             for (String skill : vacancy.skills()) {
-                String canonical = taxonomy.canonical(profile, skill);
+                String canonical = taxonomy.canonical(definitions, skill);
                 if (technologies.contains(canonical)) {
                     vacancySkills.add(canonical);
                 }
@@ -60,8 +65,7 @@ public class VacancyMarketAggregator {
                     .forEach(value -> increment(requirementCounts, value));
         }
 
-        Map<String, Double> frequencies = "live".equals(source)
-                ? new LinkedHashMap<>(profile.baselineSkillFrequencies()) : new LinkedHashMap<>();
+        Map<String, Double> frequencies = new LinkedHashMap<>();
         skillCounts.forEach((skill, count) -> frequencies.put(skill, roundShare(count, vacancies.size())));
         List<String> commonRequirements = requirementCounts.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
@@ -73,10 +77,17 @@ public class VacancyMarketAggregator {
                 List.copyOf(warnings));
     }
 
-    public VacancyMarketData baseline(LegacyResumeAnalysisProfileDefinition profile, String warning) {
-        return new VacancyMarketData("baseline", 0, new LinkedHashMap<>(profile.baselineSkillFrequencies()),
+    public VacancyMarketData fallback(MarketAnalysisProfile profile, String warning) {
+        Map<String, Double> frequencies = profile.requirements().stream().collect(java.util.stream.Collectors.toMap(
+                value -> value.label(), value -> value.frequency(), (first, second) -> first, LinkedHashMap::new));
+        return new VacancyMarketData("fallback", 0, frequencies,
                 Map.of(), Map.of(), Map.of(), null, List.of(), List.of(),
                 warning == null || warning.isBlank() ? List.of() : List.of(warning));
+    }
+
+    private static VacancyMarketData empty(String warning) {
+        return new VacancyMarketData("empty", 0, Map.of(), Map.of(), Map.of(), Map.of(), null,
+                List.of(), List.of(), List.of(warning));
     }
 
     private static VacancyMarketData.VacancyContext toContext(MarketVacancy vacancy) {

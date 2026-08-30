@@ -1,5 +1,6 @@
 package com.ororura.analyzer.resume.ai;
 
+import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
@@ -38,19 +39,21 @@ public class ResumeAnalysisPromptFactory {
             5. Косвенный вывод модели.
             Пункт 5 не считается подтверждением. Не превращай перечисление технологии в Skills в подтверждённый
             практический опыт. Если информации недостаточно, выбирай более консервативную оценку.
-            Evidence для semantic scores должно состоять только из коротких фактов из resumeText, без придуманных
+            Evidence для criterion assessments должно состоять только из коротких фактов из resumeText, без придуманных
             деталей и длинных цитат. Если score основан только на отсутствии данных, evidence должно быть пустым.
 
             SCORING POLICY
-            Все semantic scores являются целыми числами от 0 до 10:
+            Все criterion assessment scores являются целыми числами от 0 до 10:
             0 — информации для оценки нет; 1–2 — очень слабые признаки или поверхностное упоминание;
             3–4 — базовое практическое применение; 5–6 — уверенное применение в реальных задачах;
             7–8 — сильный подтверждённый опыт, несколько конкретных задач или заметная ответственность;
             9 — очень глубокая подтверждённая экспертиза; 10 — исключительный уровень с многочисленными
             сильными подтверждениями. Не повышай score из-за одного присутствия технологии в Skills.
 
-            PROFILE-SPECIFIC CRITERIA
-            %s
+            MARKET CRITERIA
+            Оцени каждый criterion из structured input ровно один раз. Используй его id, label и description только
+            как определение оцениваемой технической способности. Не оценивай рыночную важность criterion и не
+            вычисляй weights. Для criterionId верни исходный id без изменений.
 
             COMMON CRITERIA
             commercialRelevance — подтверждённая релевантность коммерческого опыта выбранному профилю;
@@ -68,8 +71,9 @@ public class ResumeAnalysisPromptFactory {
             SKILLS POLICY
             confirmed — технологии или навыки, чьё практическое использование подтверждено конкретной задачей,
             опытом или проектом. weakEvidence — технологии только из Skills или стека без подтверждающей задачи.
-            missing — только отсутствующие в resumeText технологии из ключей marketContext.skillFrequencies
-            с положительной частотой. Используй их названия из marketContext и не добавляй произвольные технологии.
+            confirmed, weakEvidence и missing могут содержать только labels из marketRequirements structured input.
+            missing — только отсутствующие в resumeText market requirements с положительной frequency.
+            Не добавляй произвольные технологии или навыки.
 
             EMPLOYMENT PERIODS
             Извлекай только явно указанные даты. Если месяц или год отсутствует, возвращай null для соответствующего
@@ -95,29 +99,25 @@ public class ResumeAnalysisPromptFactory {
 
     private final ObjectMapper objectMapper;
     private final ResumeAnalysisSchemaFactory schemaFactory;
-    private final ResumeAnalysisProfileRegistry profileRegistry;
 
-    public ResumeAnalysisPromptFactory(ObjectMapper objectMapper, ResumeAnalysisSchemaFactory schemaFactory,
-            ResumeAnalysisProfileRegistry profileRegistry) {
+    public ResumeAnalysisPromptFactory(ObjectMapper objectMapper, ResumeAnalysisSchemaFactory schemaFactory) {
         this.objectMapper = objectMapper;
         this.schemaFactory = schemaFactory;
-        this.profileRegistry = profileRegistry;
     }
 
-    public ResumeAnalysisPrompt create(String resumeText, VacancyMarketData market) {
-        return create(ResumeAnalysisProfile.defaultProfile(), resumeText, market);
-    }
-
-    public ResumeAnalysisPrompt create(ResumeAnalysisProfile profile, String resumeText, VacancyMarketData market) {
-        LegacyResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
+    public ResumeAnalysisPrompt create(MarketAnalysisProfile profile, String resumeText, VacancyMarketData market) {
         ObjectNode input = objectMapper.createObjectNode();
-        input.put("analysisProfile", profile.name());
+        input.put("analysisProfile", profile.profile().name());
+        input.put("marketProfileVersion", profile.version());
+        input.set("criteria", objectMapper.valueToTree(profile.criteria().stream()
+                .map(value -> new PromptCriterion(value.id(), value.label(), value.description())).toList()));
+        input.set("marketRequirements", objectMapper.valueToTree(profile.requirements()));
         input.put("resumeText", resumeText);
         input.set("marketContext", objectMapper.valueToTree(market));
-        String criteria = definition.criteria().stream()
-                .map(value -> value.id() + " — " + value.description() + ".")
-                .collect(java.util.stream.Collectors.joining("\n"));
-        String systemPrompt = BASE_SYSTEM_PROMPT.formatted(definition.targetRole(), criteria);
-        return new ResumeAnalysisPrompt(systemPrompt, input, schemaFactory.create(definition));
+        String systemPrompt = BASE_SYSTEM_PROMPT.formatted(profile.targetRole());
+        return new ResumeAnalysisPrompt(systemPrompt, input, schemaFactory.create(profile));
+    }
+
+    private record PromptCriterion(String id, String label, String description) {
     }
 }

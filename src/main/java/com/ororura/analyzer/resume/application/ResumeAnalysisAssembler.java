@@ -7,14 +7,14 @@ import java.util.Map;
 
 import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
-import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult.CandidateLevel;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult.InterviewChance;
 import com.ororura.analyzer.resume.config.ResumeAnalysisProperties;
 import com.ororura.analyzer.resume.domain.ExperienceModels.ExperienceSummary;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy.TechnologyProfile;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfileFallback;
+import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
+import com.ororura.analyzer.resume.market.MarketProfileSource;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import org.springframework.stereotype.Component;
 
@@ -22,22 +22,19 @@ import org.springframework.stereotype.Component;
 public class ResumeAnalysisAssembler {
 
     private final ResumeAnalysisProperties resumeProperties;
-    private final MarketAnalysisProfileFallback marketProfileFallback;
 
-    public ResumeAnalysisAssembler(ResumeAnalysisProperties resumeProperties,
-            MarketAnalysisProfileFallback marketProfileFallback) {
+    public ResumeAnalysisAssembler(ResumeAnalysisProperties resumeProperties) {
         this.resumeProperties = resumeProperties;
-        this.marketProfileFallback = marketProfileFallback;
     }
 
-    public ResumeAnalysisResult assemble(LegacyResumeAnalysisProfileDefinition profile, LlmResumeAnalysisResponse llm,
+    public ResumeAnalysisResult assemble(MarketAnalysisProfile profile, LlmResumeAnalysisResponse llm,
             ExperienceSummary experience, TechnologyProfile technologies, VacancyMarketData market,
             int commercialScore, int ats, int overall, int candidateStrength, CandidateLevel level,
             InterviewChance hrChance, InterviewChance technicalChance, Instant generatedAt,
-            AiProviderType provider, String model) {
+            AiProviderType provider, String model, MarketProfileSource profileSource) {
         LlmResumeAnalysisResponse.ExperienceAssessment experienceAssessment = llm.experienceAssessment();
         ResumeAnalysisResult.Scores scores = new ResumeAnalysisResult.Scores(
-                llm.semanticScores(), commercialScore,
+                llm.assessments(), commercialScore,
                 experienceAssessment.experienceDescriptionQuality().score(), ats,
                 llm.resumeAssessment().resumeQuality().score() * 10);
         return new ResumeAnalysisResult(profile.targetRole(), level, scores, overall, candidateStrength,
@@ -49,9 +46,9 @@ public class ResumeAnalysisAssembler {
                 llm.strengths(), llm.weaknesses(), llm.atsIssues(), llm.recommendations(),
                 vacancyFit(llm, technologies, market, level),
                 new ResumeAnalysisResult.Market(market.source(), market.sampleSize()),
-                new ResumeAnalysisResult.Metadata(resumeProperties.analysisVersion(),
+                new ResumeAnalysisResult.Metadata(profile.profile(), resumeProperties.analysisVersion(),
                         resumeProperties.baselineVersion(),
-                        marketProfileFallback.get(profile.profile()).version(), generatedAt, provider, model),
+                        profile.version(), profileSource, generatedAt, provider, model),
                 warnings(market.warnings(), llm.warnings()));
     }
 

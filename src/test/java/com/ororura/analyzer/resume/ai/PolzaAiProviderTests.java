@@ -26,8 +26,7 @@ class PolzaAiProviderTests {
     private final PolzaClient client = mock(PolzaClient.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final PolzaAiProvider provider = new PolzaAiProvider(client,
-            new ResumeAnalysisPromptFactory(objectMapper, new ResumeAnalysisSchemaFactory(objectMapper),
-                    LlmBoundaryTests.profileRegistry()),
+            new ResumeAnalysisPromptFactory(objectMapper, new ResumeAnalysisSchemaFactory(objectMapper)),
             new LlmResponseParser(objectMapper),
             new PolzaProperties(true, URI.create("https://polza.ai/api/v1"), "test-model", "secret",
                     Duration.ofSeconds(1)));
@@ -35,7 +34,8 @@ class PolzaAiProviderTests {
     @Test
     void parsesSuccessfulResponseWithoutRepairRequest() {
         when(client.requestCompletion(any())).thenReturn(LlmBoundaryTests.validJson());
-        assertThat(provider.analyze("resume", market()).semanticScores().getFirst().score()).isEqualTo(8);
+        assertThat(provider.analyze(LlmBoundaryTests.javaProfile(), "resume", market())
+                .assessments().getFirst().score()).isEqualTo(8);
     }
 
     @Test
@@ -48,7 +48,7 @@ class PolzaAiProviderTests {
 
     private void assertMapped(PolzaClientException source, ResumeErrorCode expected) {
         doThrow(source).when(client).requestCompletion(any());
-        assertThatThrownBy(() -> provider.analyze("resume", market()))
+        assertThatThrownBy(() -> provider.analyze(LlmBoundaryTests.javaProfile(), "resume", market()))
                 .isInstanceOf(ResumeAnalysisException.class)
                 .extracting(error -> ((ResumeAnalysisException) error).getCode())
                 .isEqualTo(expected);

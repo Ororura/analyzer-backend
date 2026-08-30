@@ -9,6 +9,7 @@ import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
 import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
 import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
+import com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,8 +21,11 @@ class LegacyMarketAnalysisProfileFallbackTests {
         Clock clock = Clock.fixed(Instant.parse("2026-08-30T10:00:00Z"), ZoneOffset.UTC);
         ResumeAnalysisProfileRegistry registry = new ResumeAnalysisProfileRegistry(List.of(
                 new JavaBackendAnalysisProfile(), new ReactFrontendAnalysisProfile()));
-        LegacyMarketAnalysisProfileFallback fallback = new LegacyMarketAnalysisProfileFallback(
-                registry, new MarketAnalysisProfileFactory(), clock);
+        var catalog = new DefaultAnalysisTechnologyCatalog();
+        ConfiguredMarketAnalysisProfileFallback fallback = new ConfiguredMarketAnalysisProfileFallback(
+                registry, new MarketAnalysisProfileFactory(), List.of(
+                        new JavaBackendFallbackMarketProfile(catalog),
+                        new ReactFrontendFallbackMarketProfile(catalog)), clock);
 
         MarketAnalysisProfile java = fallback.get(ResumeAnalysisProfile.JAVA_BACKEND);
         MarketAnalysisProfile react = fallback.get(ResumeAnalysisProfile.REACT_FRONTEND);

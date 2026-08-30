@@ -5,7 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.ororura.analyzer.resume.ai.AnalysisCriterion;
-import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
 import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
 import com.ororura.analyzer.resume.market.MarketAnalysisProfileFactory;
@@ -46,7 +46,7 @@ public class MarketCriterionGenerator {
         if (statistics.requirements().isEmpty()) {
             throw new MarketCriterionGenerationException("Market requirements are empty");
         }
-        LegacyResumeAnalysisProfileDefinition definition = profileRegistry.get(statistics.profile());
+        ResumeAnalysisProfileDefinition definition = profileRegistry.get(statistics.profile());
         MarketCriterionPrompt prompt = promptFactory.create(definition.targetRole(), statistics);
         List<GeneratedCriterionGroup> groups = groupingValidator.validate(
                 responseParser.parse(aiGateway.complete(prompt)), statistics);

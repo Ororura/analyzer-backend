@@ -17,6 +17,7 @@ import com.ororura.analyzer.codex.ProcessRunner;
 import com.ororura.analyzer.codex.TemporaryDirectory;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
+import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +74,7 @@ public class CodexCliAiProvider implements AiProvider {
     }
 
     @Override
-    public LlmResumeAnalysisResponse analyze(ResumeAnalysisProfile profile, String resumeText, VacancyMarketData market) {
+    public LlmResumeAnalysisResponse analyze(MarketAnalysisProfile profile, String resumeText, VacancyMarketData market) {
         acquirePermit();
         try {
             return performAnalysis(profile, resumeText, market);
@@ -89,7 +90,7 @@ public class CodexCliAiProvider implements AiProvider {
         }
     }
 
-    private LlmResumeAnalysisResponse performAnalysis(ResumeAnalysisProfile profile, String resumeText,
+    private LlmResumeAnalysisResponse performAnalysis(MarketAnalysisProfile profile, String resumeText,
             VacancyMarketData market) {
         Instant started = Instant.now();
         try (CodexWorkspace workspace = CodexWorkspace.create()) {

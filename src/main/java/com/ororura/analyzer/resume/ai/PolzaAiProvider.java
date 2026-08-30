@@ -12,6 +12,7 @@ import com.ororura.analyzer.polza.PolzaDtos.ResponseFormat;
 import com.ororura.analyzer.polza.PolzaProperties;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
+import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.node.StringNode;
@@ -48,7 +49,7 @@ public class PolzaAiProvider implements AiProvider {
     }
 
     @Override
-    public LlmResumeAnalysisResponse analyze(ResumeAnalysisProfile profile, String resumeText, VacancyMarketData market) {
+    public LlmResumeAnalysisResponse analyze(MarketAnalysisProfile profile, String resumeText, VacancyMarketData market) {
         try {
             var prompt = promptFactory.create(profile, resumeText, market);
             CompletionRequest request = new CompletionRequest(

@@ -22,16 +22,23 @@ public class DefaultMarketAnalysisProfileProvider implements MarketAnalysisProfi
     }
 
     @Override
-    public MarketAnalysisProfile getCurrent(ResumeAnalysisProfile profile) {
+    public ResolvedMarketAnalysisProfile resolve(ResumeAnalysisProfile profile) {
         if (profile == null) {
             throw new IllegalArgumentException("Resume analysis profile must be defined");
         }
         Optional<MarketAnalysisProfile> current = read(profile, "current", () -> store.current(profile));
         if (current.isPresent()) {
-            return current.get();
+            log.info("Market profile resolved profile={} source=LIVE version={}", profile, current.get().version());
+            return new ResolvedMarketAnalysisProfile(current.get(), MarketProfileSource.LIVE);
         }
         Optional<MarketAnalysisProfile> previous = read(profile, "previous", () -> store.previous(profile));
-        return previous.orElseGet(() -> fallback.get(profile));
+        if (previous.isPresent()) {
+            log.info("Market profile resolved profile={} source=CACHED version={}", profile, previous.get().version());
+            return new ResolvedMarketAnalysisProfile(previous.get(), MarketProfileSource.CACHED);
+        }
+        MarketAnalysisProfile fallbackProfile = fallback.get(profile);
+        log.info("Market profile resolved profile={} source=FALLBACK version={}", profile, fallbackProfile.version());
+        return new ResolvedMarketAnalysisProfile(fallbackProfile, MarketProfileSource.FALLBACK);
     }
 
     private static Optional<MarketAnalysisProfile> read(ResumeAnalysisProfile profile, String tier,

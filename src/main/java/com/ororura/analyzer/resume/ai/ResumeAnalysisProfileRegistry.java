@@ -9,13 +9,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class ResumeAnalysisProfileRegistry {
 
-    private final Map<ResumeAnalysisProfile, LegacyResumeAnalysisProfileDefinition> profiles;
+    private final Map<ResumeAnalysisProfile, ResumeAnalysisProfileDefinition> profiles;
 
-    public ResumeAnalysisProfileRegistry(List<LegacyResumeAnalysisProfileDefinition> definitions) {
-        EnumMap<ResumeAnalysisProfile, LegacyResumeAnalysisProfileDefinition> resolved =
+    public ResumeAnalysisProfileRegistry(List<ResumeAnalysisProfileDefinition> definitions) {
+        EnumMap<ResumeAnalysisProfile, ResumeAnalysisProfileDefinition> resolved =
                 new EnumMap<>(ResumeAnalysisProfile.class);
-        for (LegacyResumeAnalysisProfileDefinition definition : definitions) {
-            LegacyResumeAnalysisProfileDefinition previous = resolved.putIfAbsent(definition.profile(), definition);
+        for (ResumeAnalysisProfileDefinition definition : definitions) {
+            ResumeAnalysisProfileDefinition previous = resolved.putIfAbsent(definition.profile(), definition);
             if (previous != null) {
                 throw new IllegalStateException("Duplicate resume analysis profile: " + definition.profile());
             }
@@ -28,11 +28,15 @@ public class ResumeAnalysisProfileRegistry {
         this.profiles = Map.copyOf(resolved);
     }
 
-    public LegacyResumeAnalysisProfileDefinition get(ResumeAnalysisProfile profile) {
-        LegacyResumeAnalysisProfileDefinition definition = profiles.get(profile);
+    public ResumeAnalysisProfileDefinition get(ResumeAnalysisProfile profile) {
+        ResumeAnalysisProfileDefinition definition = profiles.get(profile);
         if (definition == null) {
             throw new IllegalArgumentException("Unknown resume analysis profile: " + profile);
         }
         return definition;
+    }
+
+    public List<ResumeAnalysisProfileDefinition> all() {
+        return profiles.values().stream().sorted(java.util.Comparator.comparing(value -> value.profile().name())).toList();
     }
 }

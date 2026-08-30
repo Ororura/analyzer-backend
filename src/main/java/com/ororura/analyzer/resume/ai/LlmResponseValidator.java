@@ -8,6 +8,8 @@ import java.util.List;
 import com.ororura.analyzer.resume.domain.ExperienceModels.EmploymentPeriod;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
+import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
+import com.ororura.analyzer.resume.market.MarketRequirement;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,7 +23,7 @@ public class LlmResponseValidator {
     }
 
     public List<EmploymentPeriod> validateAndConvert(LlmResumeAnalysisResponse response,
-            LegacyResumeAnalysisProfileDefinition profile) {
+            MarketAnalysisProfile profile) {
         YearMonth currentMonth = YearMonth.now(clock);
         List<EmploymentPeriod> periods = new ArrayList<>();
         for (LlmResumeAnalysisResponse.EmploymentPeriod value : response.employmentPeriods()) {
@@ -40,9 +42,7 @@ public class LlmResponseValidator {
             }
         }
         validateScores(response, profile);
-        validateStrings(response.skills().confirmed());
-        validateStrings(response.skills().weakEvidence());
-        validateStrings(response.skills().missing());
+        validateSkills(response, profile);
         validateStrings(response.strengths());
         validateStrings(response.weaknesses());
         validateStrings(response.atsIssues());
@@ -85,12 +85,12 @@ public class LlmResponseValidator {
         }
     }
 
-    private static void validateScores(LlmResumeAnalysisResponse response, LegacyResumeAnalysisProfileDefinition profile) {
+    private static void validateScores(LlmResumeAnalysisResponse response, MarketAnalysisProfile profile) {
         java.util.Set<String> expected = profile.criteria().stream()
                 .map(AnalysisCriterion::id).collect(java.util.stream.Collectors.toSet());
         java.util.Set<String> actual = new java.util.HashSet<>();
-        for (SemanticAssessment assessment : response.semanticScores()) {
-            if (!actual.add(assessment.criterion())) throw invalid();
+        for (CriterionAssessment assessment : response.assessments()) {
+            if (!actual.add(assessment.criterionId())) throw invalid();
             validateStrings(assessment.evidence());
         }
         if (!actual.equals(expected)) throw invalid();
@@ -98,6 +98,24 @@ public class LlmResponseValidator {
         validateScore(experience.commercialRelevance(), experience.experienceDescriptionQuality(),
                 experience.responsibilityLevel());
         validateScore(response.resumeAssessment().resumeQuality(), response.resumeAssessment().atsReadability());
+    }
+
+    private static void validateSkills(LlmResumeAnalysisResponse response, MarketAnalysisProfile profile) {
+        java.util.Set<String> allowed = profile.requirements().stream()
+                .map(MarketRequirement::label).collect(java.util.stream.Collectors.toSet());
+        java.util.Set<String> allowedMissing = profile.requirements().stream()
+                .filter(requirement -> requirement.frequency() > 0).map(MarketRequirement::label)
+                .collect(java.util.stream.Collectors.toSet());
+        validateSkillList(response.skills().confirmed(), allowed);
+        validateSkillList(response.skills().weakEvidence(), allowed);
+        validateSkillList(response.skills().missing(), allowedMissing);
+    }
+
+    private static void validateSkillList(List<String> values, java.util.Set<String> allowed) {
+        validateStrings(values);
+        if (!allowed.containsAll(values) || values.size() != new java.util.HashSet<>(values).size()) {
+            throw invalid();
+        }
     }
 
     private static void validateScore(LlmResumeAnalysisResponse.SemanticScore... scores) {

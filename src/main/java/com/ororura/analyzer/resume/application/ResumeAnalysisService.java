@@ -12,8 +12,6 @@ import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.LlmResponseValidator;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
 import com.ororura.analyzer.resume.api.VacancyAnalysisRequest;
 import com.ororura.analyzer.resume.api.VacancyAnalysisMode;
@@ -29,6 +27,8 @@ import com.ororura.analyzer.resume.domain.InterviewChancePolicy;
 import com.ororura.analyzer.resume.domain.OverallScoreCalculator;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy.TechnologyProfile;
+import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
+import com.ororura.analyzer.resume.market.MarketAnalysisProfileProvider;
 import com.ororura.analyzer.resume.pdf.PdfFileValidator;
 import com.ororura.analyzer.resume.pdf.PdfTextExtractor;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
@@ -62,14 +62,14 @@ public class ResumeAnalysisService {
     private final ResumeAnalysisAssembler assembler;
     private final ResumeAnalysisProperties properties;
     private final Clock clock;
-    private final ResumeAnalysisProfileRegistry profileRegistry;
+    private final MarketAnalysisProfileProvider marketProfileProvider;
 
     public ResumeAnalysisService(PdfFileValidator fileValidator, PdfTextExtractor textExtractor,
             VacancyMarketService marketService, AiProviderRegistry aiProviderRegistry, LlmResponseValidator llmValidator,
             ExperienceCalculator experienceCalculator, TechnologyTaxonomy taxonomy, AtsScoreCalculator atsCalculator,
             OverallScoreCalculator overallCalculator, CandidateStrengthCalculator strengthCalculator,
             CandidateLevelPolicy levelPolicy, InterviewChancePolicy chancePolicy, ResumeAnalysisAssembler assembler,
-            ResumeAnalysisProperties properties, Clock clock, ResumeAnalysisProfileRegistry profileRegistry) {
+            ResumeAnalysisProperties properties, Clock clock, MarketAnalysisProfileProvider marketProfileProvider) {
         this.fileValidator = fileValidator;
         this.textExtractor = textExtractor;
         this.marketService = marketService;
@@ -85,7 +85,7 @@ public class ResumeAnalysisService {
         this.assembler = assembler;
         this.properties = properties;
         this.clock = clock;
-        this.profileRegistry = profileRegistry;
+        this.marketProfileProvider = marketProfileProvider;
     }
 
     public ResumeAnalysisResult analyze(MultipartFile file) {
@@ -143,28 +143,29 @@ public class ResumeAnalysisService {
         AiProvider aiProvider = aiProviderRegistry.get(requestedProvider);
         ResumeAnalysisProfile profile = requestedProfile == null
                 ? ResumeAnalysisProfile.defaultProfile() : requestedProfile;
-        LegacyResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
+        var resolvedMarketProfile = marketProfileProvider.resolve(profile);
+        MarketAnalysisProfile marketProfile = resolvedMarketProfile.profile();
         VacancyAnalysisMode mode = vacancyAnalysis == null || vacancyAnalysis.mode() == null
                 ? VacancyAnalysisMode.AUTO_MARKET : vacancyAnalysis.mode();
         VacancyMarketData market = mode == VacancyAnalysisMode.AUTO_MARKET
-                ? marketService.load(profile, definition.targetRole())
-                : marketService.load(profile, vacancyAnalysis, definition.targetRole());
+                ? marketService.load(profile, marketProfile.targetRole())
+                : marketService.load(profile, vacancyAnalysis, marketProfile.targetRole());
         log.info("market context resolved analysisId={} source={} sampleSize={}",
                 analysisId, market.source(), market.sampleSize());
-        LlmResumeAnalysisResponse llm = aiProvider.analyze(profile, text, market);
+        LlmResumeAnalysisResponse llm = aiProvider.analyze(marketProfile, text, market);
         log.info("AI request completed analysisId={} provider={}", analysisId, aiProvider.type());
-        List<EmploymentPeriod> periods = llmValidator.validateAndConvert(llm, definition);
+        List<EmploymentPeriod> periods = llmValidator.validateAndConvert(llm, marketProfile);
         log.info("LLM response validated analysisId={}", analysisId);
 
         ExperienceSummary experience = experienceCalculator.calculate(periods);
         int commercialScore = experienceCalculator.commercialScore(experience.commercialMonths());
-        TechnologyProfile technologies = taxonomy.profile(definition, text, llm.skills().confirmed(),
+        TechnologyProfile technologies = taxonomy.profile(marketProfile, text, llm.skills().confirmed(),
                 llm.skills().weakEvidence(), llm.skills().missing());
         AtsScore ats = atsCalculator.calculate(llm.resumeAssessment().atsReadability().score(),
                 llm.resumeAssessment().resumeQuality().score(),
                 llm.experienceAssessment().experienceDescriptionQuality().score(),
-                commercialScore, technologies, market, definition);
-        int technicalScore = overallCalculator.technicalScore(llm.semanticScores(), definition.criteria());
+                commercialScore, technologies, marketProfile);
+        int technicalScore = overallCalculator.technicalScore(llm.assessments(), marketProfile.criteria());
         int overall = overallCalculator.overall(technicalScore, ats.total(), commercialScore,
                 llm.resumeAssessment().resumeQuality().score() * 10,
                 llm.experienceAssessment().responsibilityLevel().score());
@@ -176,9 +177,9 @@ public class ResumeAnalysisService {
         var technicalChance = chancePolicy.technical(technicalScore, overall);
         Instant completed = clock.instant();
         log.info("deterministic calculations completed analysisId={} ats={} overall={}", analysisId, ats.total(), overall);
-        ResumeAnalysisResult result = assembler.assemble(definition, llm, experience, technologies, market, commercialScore,
+        ResumeAnalysisResult result = assembler.assemble(marketProfile, llm, experience, technologies, market, commercialScore,
                 ats.total(), overall, strength, level, hrChance, technicalChance, completed,
-                aiProvider.type(), aiProvider.model().orElse(null));
+                aiProvider.type(), aiProvider.model().orElse(null), resolvedMarketProfile.source());
         log.info("resume analysis completed analysisId={} durationMs={}", analysisId,
                 Duration.between(started, completed).toMillis());
         return result;

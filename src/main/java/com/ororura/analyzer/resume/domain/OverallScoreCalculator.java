@@ -6,21 +6,29 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.ororura.analyzer.resume.ai.AnalysisCriterion;
-import com.ororura.analyzer.resume.ai.SemanticAssessment;
+import com.ororura.analyzer.resume.ai.CriterionAssessment;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OverallScoreCalculator {
 
-    public int technicalScore(List<SemanticAssessment> assessments, List<AnalysisCriterion> criteria) {
-        Map<String, SemanticAssessment> byCriterion = assessments.stream()
-                .collect(Collectors.toMap(SemanticAssessment::criterion, Function.identity()));
+    private static final double NORMALIZED_WEIGHT_EPSILON = 1e-9;
+
+    public int technicalScore(List<CriterionAssessment> assessments, List<AnalysisCriterion> criteria) {
+        Map<String, CriterionAssessment> byCriterion = assessments.stream()
+                .collect(Collectors.toMap(CriterionAssessment::criterionId, Function.identity()));
         double totalWeight = criteria.stream().mapToDouble(AnalysisCriterion::weight).sum();
-        if (totalWeight <= 0) return 0;
-        double weighted = criteria.stream()
+        if (Math.abs(totalWeight - 1.0) > NORMALIZED_WEIGHT_EPSILON) {
+            throw new IllegalArgumentException("Market criterion weights must be normalized");
+        }
+        if (byCriterion.size() != criteria.size()
+                || criteria.stream().anyMatch(criterion -> !byCriterion.containsKey(criterion.id()))) {
+            throw new IllegalArgumentException("Criterion assessments must match market profile criteria");
+        }
+        double technicalScore = criteria.stream()
                 .mapToDouble(criterion -> byCriterion.get(criterion.id()).score() * criterion.weight())
                 .sum();
-        return ScoreMath.score(weighted / totalWeight * 10);
+        return ScoreMath.score(technicalScore * 10);
     }
 
     public int overall(int technical, int ats, int commercialExperience, int resumeQuality, int responsibility) {

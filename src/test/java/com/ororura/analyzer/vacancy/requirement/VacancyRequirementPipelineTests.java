@@ -19,8 +19,10 @@ class VacancyRequirementPipelineTests {
 
     private final ResumeAnalysisProfileRegistry registry = new ResumeAnalysisProfileRegistry(List.of(
             new JavaBackendAnalysisProfile(), new ReactFrontendAnalysisProfile()));
-    private final RequirementCanonicalizer canonicalizer = new RequirementCanonicalizer(registry);
-    private final KnownRequirementExtractor knownExtractor = new KnownRequirementExtractor(registry, canonicalizer);
+    private final com.ororura.analyzer.resume.ai.AnalysisTechnologyCatalog technologies =
+            new com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog();
+    private final RequirementCanonicalizer canonicalizer = new RequirementCanonicalizer(technologies);
+    private final KnownRequirementExtractor knownExtractor = new KnownRequirementExtractor(technologies, canonicalizer);
     private final VacancyRequirementMerger merger = new VacancyRequirementMerger(canonicalizer);
 
     @Test

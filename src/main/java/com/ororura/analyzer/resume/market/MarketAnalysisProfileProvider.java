@@ -4,5 +4,9 @@ import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
 
 public interface MarketAnalysisProfileProvider {
 
-    MarketAnalysisProfile getCurrent(ResumeAnalysisProfile profile);
+    ResolvedMarketAnalysisProfile resolve(ResumeAnalysisProfile profile);
+
+    default MarketAnalysisProfile getCurrent(ResumeAnalysisProfile profile) {
+        return resolve(profile).profile();
+    }
 }
