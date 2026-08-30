@@ -88,8 +88,13 @@ public record ResumeAnalysisResult(
         }
     }
 
-    public record Metadata(String analysisVersion, String baselineVersion, Instant generatedAt,
-            AiProviderType provider, String model) {
+    public record Metadata(String analysisVersion, String baselineVersion, String marketProfileVersion,
+            Instant generatedAt, AiProviderType provider, String model) {
+
+        public Metadata(String analysisVersion, String baselineVersion, Instant generatedAt,
+                AiProviderType provider, String model) {
+            this(analysisVersion, baselineVersion, null, generatedAt, provider, model);
+        }
     }
 
     public enum CandidateLevel {

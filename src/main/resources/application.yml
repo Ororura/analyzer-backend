@@ -74,6 +74,12 @@ app:
     analysis-version: ${RESUME_ANALYSIS_VERSION:1}
     baseline-version: ${RESUME_BASELINE_VERSION:2026-08}
     max-text-length: ${RESUME_MAX_TEXT_LENGTH:200000}
+    market:
+      min-requirement-frequency: ${RESUME_MARKET_MIN_REQUIREMENT_FREQUENCY:0.05}
+      min-vacancy-count: ${RESUME_MARKET_MIN_VACANCY_COUNT:2}
+      minimum-sample-size: ${RESUME_MARKET_MINIMUM_SAMPLE_SIZE:30}
+      batch-size: ${RESUME_MARKET_BATCH_SIZE:5}
+      max-retries: ${RESUME_MARKET_MAX_RETRIES:2}
   ai:
     default-provider: ${AI_DEFAULT_PROVIDER:POLZA}
     codex:

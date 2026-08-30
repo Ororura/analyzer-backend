@@ -203,7 +203,7 @@ class LlmBoundaryTests {
         return new ResumeAnalysisProfileRegistry(List.of(javaProfile(), new ReactFrontendAnalysisProfile()));
     }
 
-    static ResumeAnalysisProfileDefinition javaProfile() {
+    static LegacyResumeAnalysisProfileDefinition javaProfile() {
         return new JavaBackendAnalysisProfile(new ResumeAnalysisProperties(
                 DataSize.ofMegabytes(10), "Java Backend Developer", "1", "2026-08", 200_000));
     }

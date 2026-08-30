@@ -9,13 +9,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class ResumeAnalysisProfileRegistry {
 
-    private final Map<ResumeAnalysisProfile, ResumeAnalysisProfileDefinition> profiles;
+    private final Map<ResumeAnalysisProfile, LegacyResumeAnalysisProfileDefinition> profiles;
 
-    public ResumeAnalysisProfileRegistry(List<ResumeAnalysisProfileDefinition> definitions) {
-        EnumMap<ResumeAnalysisProfile, ResumeAnalysisProfileDefinition> resolved =
+    public ResumeAnalysisProfileRegistry(List<LegacyResumeAnalysisProfileDefinition> definitions) {
+        EnumMap<ResumeAnalysisProfile, LegacyResumeAnalysisProfileDefinition> resolved =
                 new EnumMap<>(ResumeAnalysisProfile.class);
-        for (ResumeAnalysisProfileDefinition definition : definitions) {
-            ResumeAnalysisProfileDefinition previous = resolved.putIfAbsent(definition.profile(), definition);
+        for (LegacyResumeAnalysisProfileDefinition definition : definitions) {
+            LegacyResumeAnalysisProfileDefinition previous = resolved.putIfAbsent(definition.profile(), definition);
             if (previous != null) {
                 throw new IllegalStateException("Duplicate resume analysis profile: " + definition.profile());
             }
@@ -28,8 +28,8 @@ public class ResumeAnalysisProfileRegistry {
         this.profiles = Map.copyOf(resolved);
     }
 
-    public ResumeAnalysisProfileDefinition get(ResumeAnalysisProfile profile) {
-        ResumeAnalysisProfileDefinition definition = profiles.get(profile);
+    public LegacyResumeAnalysisProfileDefinition get(ResumeAnalysisProfile profile) {
+        LegacyResumeAnalysisProfileDefinition definition = profiles.get(profile);
         if (definition == null) {
             throw new IllegalArgumentException("Unknown resume analysis profile: " + profile);
         }

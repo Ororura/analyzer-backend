@@ -5,11 +5,11 @@ import java.util.List;
 import com.ororura.analyzer.resume.ai.AnalysisCriterion;
 import com.ororura.analyzer.resume.ai.AnalysisTechnology;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
+import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ReactFrontendAnalysisProfile implements ResumeAnalysisProfileDefinition {
+public class ReactFrontendAnalysisProfile implements LegacyResumeAnalysisProfileDefinition {
 
     @Override public ResumeAnalysisProfile profile() { return ResumeAnalysisProfile.REACT_FRONTEND; }
     @Override public String targetRole() { return "React Frontend Developer"; }

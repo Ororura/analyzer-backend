@@ -8,7 +8,7 @@ import com.ororura.analyzer.vacancy.selection.VacancySelectionResolver;
 import com.ororura.analyzer.resume.api.VacancyAnalysisMode;
 import com.ororura.analyzer.resume.api.VacancyAnalysisRequest;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
+import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +33,7 @@ public class VacancyMarketService {
     }
 
     public VacancyMarketData load(ResumeAnalysisProfile profile, String text) {
-        ResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
+        LegacyResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
         try {
             VacancyQueryService.DomainSearchResult result = queryService.searchDomain(
                     new VacancySearchQuery(text, 0, 20, null, null, null, null, null).toCriteria());
@@ -47,7 +47,7 @@ public class VacancyMarketService {
 
     public VacancyMarketData load(ResumeAnalysisProfile profile, VacancyAnalysisRequest request,
             String automaticTargetRole) {
-        ResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
+        LegacyResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
         VacancyAnalysisRequest resolved = request == null ? VacancyAnalysisRequest.autoMarket() : request;
         VacancyAnalysisMode mode = resolved.mode() == null ? VacancyAnalysisMode.AUTO_MARKET : resolved.mode();
         return switch (mode) {

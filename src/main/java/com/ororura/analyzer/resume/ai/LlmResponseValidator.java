@@ -21,7 +21,7 @@ public class LlmResponseValidator {
     }
 
     public List<EmploymentPeriod> validateAndConvert(LlmResumeAnalysisResponse response,
-            ResumeAnalysisProfileDefinition profile) {
+            LegacyResumeAnalysisProfileDefinition profile) {
         YearMonth currentMonth = YearMonth.now(clock);
         List<EmploymentPeriod> periods = new ArrayList<>();
         for (LlmResumeAnalysisResponse.EmploymentPeriod value : response.employmentPeriods()) {
@@ -85,7 +85,7 @@ public class LlmResponseValidator {
         }
     }
 
-    private static void validateScores(LlmResumeAnalysisResponse response, ResumeAnalysisProfileDefinition profile) {
+    private static void validateScores(LlmResumeAnalysisResponse response, LegacyResumeAnalysisProfileDefinition profile) {
         java.util.Set<String> expected = profile.criteria().stream()
                 .map(AnalysisCriterion::id).collect(java.util.stream.Collectors.toSet());
         java.util.Set<String> actual = new java.util.HashSet<>();

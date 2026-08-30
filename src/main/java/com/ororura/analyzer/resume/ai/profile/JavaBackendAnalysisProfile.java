@@ -7,13 +7,13 @@ import java.util.Map;
 import com.ororura.analyzer.resume.ai.AnalysisCriterion;
 import com.ororura.analyzer.resume.ai.AnalysisTechnology;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
+import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
 import com.ororura.analyzer.resume.config.ResumeAnalysisProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Component
-public class JavaBackendAnalysisProfile implements ResumeAnalysisProfileDefinition {
+public class JavaBackendAnalysisProfile implements LegacyResumeAnalysisProfileDefinition {
 
     private final String targetRole;
 

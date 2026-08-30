@@ -5,7 +5,7 @@ import java.util.Map;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy.Evidence;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy.TechnologyProfile;
 import com.ororura.analyzer.resume.ai.AnalysisTechnology;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
+import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +20,7 @@ public class AtsScoreCalculator {
 
     public AtsScore calculate(int atsReadability, int resumeQuality, int experienceDescription,
             int commercialExperience, TechnologyProfile technologies, VacancyMarketData market,
-            ResumeAnalysisProfileDefinition profile) {
+            LegacyResumeAnalysisProfileDefinition profile) {
         int coverage = coverage(technologies, profile);
         int relevance = marketRelevance(technologies, market.skillFrequencies(), profile);
         int total = ScoreMath.score(atsReadability * 10 * .25 + coverage * .25 + relevance * .20
@@ -29,16 +29,16 @@ public class AtsScoreCalculator {
         return new AtsScore(total, coverage, relevance);
     }
 
-    int coverage(TechnologyProfile technologies, ResumeAnalysisProfileDefinition profile) {
+    int coverage(TechnologyProfile technologies, LegacyResumeAnalysisProfileDefinition profile) {
         return weighted(technologies, profile, technology -> 1.0);
     }
 
     int marketRelevance(TechnologyProfile technologies, Map<String, Double> frequencies,
-            ResumeAnalysisProfileDefinition profile) {
+            LegacyResumeAnalysisProfileDefinition profile) {
         return weighted(technologies, profile, technology -> frequencies.getOrDefault(technology, 0.0));
     }
 
-    private int weighted(TechnologyProfile technologies, ResumeAnalysisProfileDefinition profile, Weight weight) {
+    private int weighted(TechnologyProfile technologies, LegacyResumeAnalysisProfileDefinition profile, Weight weight) {
         double earned = 0;
         double available = 0;
         for (Map.Entry<String, AnalysisTechnology.Tier> technology : taxonomy.tiers(profile).entrySet()) {

@@ -27,6 +27,8 @@ import com.ororura.analyzer.resume.pdf.PdfFileValidator;
 import com.ororura.analyzer.resume.pdf.PdfTextExtractor;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
+import com.ororura.analyzer.resume.market.LegacyMarketAnalysisProfileFallback;
+import com.ororura.analyzer.resume.market.MarketAnalysisProfileFactory;
 import com.ororura.analyzer.vacancy.market.VacancyMarketService;
 import com.ororura.analyzer.vacancy.selection.SelectionMode;
 import com.ororura.analyzer.vacancy.selection.VacancySelection;
@@ -79,11 +81,14 @@ class ResumeAnalysisServiceTests {
 
         TechnologyTaxonomy taxonomy = new TechnologyTaxonomy();
         AtsScoreCalculator ats = new AtsScoreCalculator(taxonomy);
+        ResumeAnalysisProfileRegistry profiles = profileRegistry(properties);
+        var fallback = new LegacyMarketAnalysisProfileFallback(
+                profiles, new MarketAnalysisProfileFactory(), clock);
         ResumeAnalysisService service = new ResumeAnalysisService(fileValidator, extractor, marketService, registry,
                 new LlmResponseValidator(clock), new ExperienceCalculator(), taxonomy, ats,
                 new OverallScoreCalculator(), new CandidateStrengthCalculator(), new CandidateLevelPolicy(),
-                new InterviewChancePolicy(), new ResumeAnalysisAssembler(properties), properties, clock,
-                profileRegistry(properties));
+                new InterviewChancePolicy(), new ResumeAnalysisAssembler(properties, fallback), properties, clock,
+                profiles);
 
         ResumeAnalysisResult result = service.analyze(file, AiProviderType.POLZA);
         ResumeAnalysisResult codexResult = service.analyze(file, AiProviderType.CODEX_CLI);
@@ -102,6 +107,9 @@ class ResumeAnalysisServiceTests {
         assertThat(result.technicalInterviewChance()).isEqualTo(ResumeAnalysisResult.InterviewChance.MEDIUM);
         assertThat(result.metadata().generatedAt()).isEqualTo(Instant.parse("2026-08-28T07:00:00Z"));
         assertThat(result.metadata().provider()).isEqualTo(AiProviderType.POLZA);
+        assertThat(result.metadata().marketProfileVersion())
+                .isEqualTo(fallback.get(ResumeAnalysisProfile.JAVA_BACKEND).version())
+                .startsWith("sha256:");
         assertThat(codexResult.metadata().provider()).isEqualTo(AiProviderType.CODEX_CLI);
         assertThat(codexResult.metadata().model()).isNull();
         assertThat(codexResult.scores()).isEqualTo(result.scores());
@@ -116,6 +124,9 @@ class ResumeAnalysisServiceTests {
         assertThat(singleResult.vacancyFit().experienceRelevanceScore()).isEqualTo(7);
         assertThat(singleResult.vacancyFit().risks()).containsExactly("weakness");
         assertThat(reactResult.targetRole()).isEqualTo("React Frontend Developer");
+        assertThat(reactResult.metadata().marketProfileVersion())
+                .isEqualTo(fallback.get(ResumeAnalysisProfile.REACT_FRONTEND).version())
+                .isNotEqualTo(result.metadata().marketProfileVersion());
         assertThat(reactResult.scores().semanticScores()).extracting(SemanticAssessment::criterion)
                 .contains("javascriptDepth", "typescriptDepth", "reactDepth")
                 .doesNotContain("javaDepth", "springDepth");

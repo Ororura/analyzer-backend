@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.ororura.analyzer.resume.ai.AnalysisTechnology;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
+import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,7 +19,7 @@ public class TechnologyTaxonomy {
 
     public enum Evidence { CONFIRMED, WEAK, EXPLICIT, MISSING }
 
-    public String canonical(ResumeAnalysisProfileDefinition profile, String value) {
+    public String canonical(LegacyResumeAnalysisProfileDefinition profile, String value) {
         return canonical(profile.technologies(), value);
     }
 
@@ -38,7 +38,7 @@ public class TechnologyTaxonomy {
                 + normalized.substring(1).toLowerCase(Locale.ROOT);
     }
 
-    public Set<String> explicitlyPresent(ResumeAnalysisProfileDefinition profile, String text) {
+    public Set<String> explicitlyPresent(LegacyResumeAnalysisProfileDefinition profile, String text) {
         Set<String> result = new LinkedHashSet<>();
         String source = text == null ? "" : text;
         for (Alias alias : aliases(profile)) {
@@ -47,7 +47,7 @@ public class TechnologyTaxonomy {
         return Collections.unmodifiableSet(result);
     }
 
-    public TechnologyProfile profile(ResumeAnalysisProfileDefinition definition, String text,
+    public TechnologyProfile profile(LegacyResumeAnalysisProfileDefinition definition, String text,
             List<String> confirmed, List<String> weak, List<String> missing) {
         Map<String, Evidence> evidence = new LinkedHashMap<>();
         add(definition, evidence, missing, Evidence.MISSING);
@@ -59,7 +59,7 @@ public class TechnologyTaxonomy {
                 names(evidence, Evidence.WEAK, Evidence.EXPLICIT), names(evidence, Evidence.MISSING));
     }
 
-    public Map<String, AnalysisTechnology.Tier> tiers(ResumeAnalysisProfileDefinition profile) {
+    public Map<String, AnalysisTechnology.Tier> tiers(LegacyResumeAnalysisProfileDefinition profile) {
         return tiers(profile.technologies());
     }
 
@@ -68,7 +68,7 @@ public class TechnologyTaxonomy {
                 AnalysisTechnology::name, AnalysisTechnology::tier));
     }
 
-    private void add(ResumeAnalysisProfileDefinition profile, Map<String, Evidence> target,
+    private void add(LegacyResumeAnalysisProfileDefinition profile, Map<String, Evidence> target,
             List<String> values, Evidence status) {
         if (values == null) return;
         for (String value : values) {
@@ -84,7 +84,7 @@ public class TechnologyTaxonomy {
         return List.copyOf(result);
     }
 
-    private static List<Alias> aliases(ResumeAnalysisProfileDefinition profile) {
+    private static List<Alias> aliases(LegacyResumeAnalysisProfileDefinition profile) {
         return aliases(profile.technologies());
     }
 

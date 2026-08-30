@@ -109,7 +109,7 @@ public class ResumeAnalysisPromptFactory {
     }
 
     public ResumeAnalysisPrompt create(ResumeAnalysisProfile profile, String resumeText, VacancyMarketData market) {
-        ResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
+        LegacyResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
         ObjectNode input = objectMapper.createObjectNode();
         input.put("analysisProfile", profile.name());
         input.put("resumeText", resumeText);

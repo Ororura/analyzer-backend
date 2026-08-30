@@ -15,7 +15,7 @@ public class ResumeAnalysisSchemaFactory {
         this.objectMapper = objectMapper;
     }
 
-    public JsonNode create(ResumeAnalysisProfileDefinition profile) {
+    public JsonNode create(LegacyResumeAnalysisProfileDefinition profile) {
         ObjectNode properties = objectMapper.createObjectNode();
         properties.set("semanticScores", semanticScores(profile));
         properties.set("experienceAssessment", scoredObject("commercialRelevance", "experienceDescriptionQuality",
@@ -31,7 +31,7 @@ public class ResumeAnalysisSchemaFactory {
         return closedRequiredObject(properties);
     }
 
-    private ObjectNode semanticScores(ResumeAnalysisProfileDefinition profile) {
+    private ObjectNode semanticScores(LegacyResumeAnalysisProfileDefinition profile) {
         ObjectNode properties = objectMapper.createObjectNode();
         ObjectNode criterion = stringType();
         ArrayNode allowed = objectMapper.createArrayNode();

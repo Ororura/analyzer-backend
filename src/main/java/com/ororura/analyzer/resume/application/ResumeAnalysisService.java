@@ -12,7 +12,7 @@ import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.LlmResponseValidator;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
+import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
 import com.ororura.analyzer.resume.api.VacancyAnalysisRequest;
@@ -143,7 +143,7 @@ public class ResumeAnalysisService {
         AiProvider aiProvider = aiProviderRegistry.get(requestedProvider);
         ResumeAnalysisProfile profile = requestedProfile == null
                 ? ResumeAnalysisProfile.defaultProfile() : requestedProfile;
-        ResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
+        LegacyResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
         VacancyAnalysisMode mode = vacancyAnalysis == null || vacancyAnalysis.mode() == null
                 ? VacancyAnalysisMode.AUTO_MARKET : vacancyAnalysis.mode();
         VacancyMarketData market = mode == VacancyAnalysisMode.AUTO_MARKET

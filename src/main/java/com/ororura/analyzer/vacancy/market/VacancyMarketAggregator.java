@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
+import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy;
 import org.springframework.stereotype.Component;
 
@@ -24,12 +24,12 @@ public class VacancyMarketAggregator {
         this.taxonomy = taxonomy;
     }
 
-    public VacancyMarketData aggregate(ResumeAnalysisProfileDefinition profile,
+    public VacancyMarketData aggregate(LegacyResumeAnalysisProfileDefinition profile,
             List<MarketVacancy> vacancies, List<String> warnings) {
         return aggregate(profile, vacancies, warnings, "live");
     }
 
-    public VacancyMarketData aggregate(ResumeAnalysisProfileDefinition profile,
+    public VacancyMarketData aggregate(LegacyResumeAnalysisProfileDefinition profile,
             List<MarketVacancy> vacancies, List<String> warnings, String source) {
         if (vacancies.isEmpty()) {
             return baseline(profile, warnings.isEmpty() ? "HH.ru не вернул актуальные вакансии" : warnings.getFirst());
@@ -73,7 +73,7 @@ public class VacancyMarketAggregator {
                 List.copyOf(warnings));
     }
 
-    public VacancyMarketData baseline(ResumeAnalysisProfileDefinition profile, String warning) {
+    public VacancyMarketData baseline(LegacyResumeAnalysisProfileDefinition profile, String warning) {
         return new VacancyMarketData("baseline", 0, new LinkedHashMap<>(profile.baselineSkillFrequencies()),
                 Map.of(), Map.of(), Map.of(), null, List.of(), List.of(),
                 warning == null || warning.isBlank() ? List.of() : List.of(warning));

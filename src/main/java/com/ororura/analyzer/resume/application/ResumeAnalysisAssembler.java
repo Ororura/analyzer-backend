@@ -7,13 +7,14 @@ import java.util.Map;
 
 import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
+import com.ororura.analyzer.resume.ai.LegacyResumeAnalysisProfileDefinition;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult.CandidateLevel;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult.InterviewChance;
 import com.ororura.analyzer.resume.config.ResumeAnalysisProperties;
 import com.ororura.analyzer.resume.domain.ExperienceModels.ExperienceSummary;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy.TechnologyProfile;
+import com.ororura.analyzer.resume.market.MarketAnalysisProfileFallback;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import org.springframework.stereotype.Component;
 
@@ -21,12 +22,15 @@ import org.springframework.stereotype.Component;
 public class ResumeAnalysisAssembler {
 
     private final ResumeAnalysisProperties resumeProperties;
+    private final MarketAnalysisProfileFallback marketProfileFallback;
 
-    public ResumeAnalysisAssembler(ResumeAnalysisProperties resumeProperties) {
+    public ResumeAnalysisAssembler(ResumeAnalysisProperties resumeProperties,
+            MarketAnalysisProfileFallback marketProfileFallback) {
         this.resumeProperties = resumeProperties;
+        this.marketProfileFallback = marketProfileFallback;
     }
 
-    public ResumeAnalysisResult assemble(ResumeAnalysisProfileDefinition profile, LlmResumeAnalysisResponse llm,
+    public ResumeAnalysisResult assemble(LegacyResumeAnalysisProfileDefinition profile, LlmResumeAnalysisResponse llm,
             ExperienceSummary experience, TechnologyProfile technologies, VacancyMarketData market,
             int commercialScore, int ats, int overall, int candidateStrength, CandidateLevel level,
             InterviewChance hrChance, InterviewChance technicalChance, Instant generatedAt,
@@ -46,7 +50,8 @@ public class ResumeAnalysisAssembler {
                 vacancyFit(llm, technologies, market, level),
                 new ResumeAnalysisResult.Market(market.source(), market.sampleSize()),
                 new ResumeAnalysisResult.Metadata(resumeProperties.analysisVersion(),
-                        resumeProperties.baselineVersion(), generatedAt, provider, model),
+                        resumeProperties.baselineVersion(),
+                        marketProfileFallback.get(profile.profile()).version(), generatedAt, provider, model),
                 warnings(market.warnings(), llm.warnings()));
     }
 
