@@ -2,6 +2,8 @@ package com.ororura.analyzer.vacancy.cache;
 
 import java.util.function.Supplier;
 
+import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.api.VacancyDtos.VacancySearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;
@@ -19,8 +21,13 @@ public class VacancyCacheFacade {
         this.cacheManager = cacheManager;
     }
 
-    public <T> T details(String key, Supplier<T> loader) { return load(DETAILS, key, loader); }
-    public <T> T search(String key, Supplier<T> loader) { return load(SEARCH, key, loader); }
+    public Vacancy details(String key, Supplier<Vacancy> loader) {
+        return load(DETAILS, key, Vacancy.class, loader);
+    }
+
+    public VacancySearchResult search(String key, Supplier<VacancySearchResult> loader) {
+        return load(SEARCH, key, VacancySearchResult.class, loader);
+    }
 
     public void evictDetails(String key) {
         try {
@@ -31,13 +38,25 @@ public class VacancyCacheFacade {
         }
     }
 
-    private <T> T load(String cacheName, String key, Supplier<T> loader) {
+    private <T> T load(String cacheName, String key, Class<T> valueType, Supplier<T> loader) {
+        Cache cache = null;
         try {
-            Cache cache = cacheManager.getCache(cacheName);
-            if (cache != null) return cache.get(key, loader::get);
+            cache = cacheManager.getCache(cacheName);
+            if (cache != null) {
+                T cached = cache.get(key, valueType);
+                if (cached != null) return cached;
+            }
         } catch (RuntimeException exception) {
             log.warn("Vacancy cache unavailable cache={} key={}; using PostgreSQL", cacheName, key, exception);
         }
-        return loader.get();
+        T loaded = loader.get();
+        if (cache != null) {
+            try {
+                cache.put(key, loaded);
+            } catch (RuntimeException exception) {
+                log.warn("Vacancy cache write failed cache={} key={}", cacheName, key, exception);
+            }
+        }
+        return loaded;
     }
 }

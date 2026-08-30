@@ -2,6 +2,25 @@
 
 Spring Boot backend for vacancy and resume analysis.
 
+## Local development
+
+Start PostgreSQL and Redis in Docker:
+
+```bash
+docker compose -f compose.local.yml up -d
+```
+
+Then run the backend directly from IntelliJ IDEA with `SPRING_PROFILES_ACTIVE=local`, or with Gradle:
+
+```bash
+SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
+```
+
+The local profile connects to PostgreSQL at `localhost:5432` and Redis at `localhost:6379`. Its default database name,
+username, and password are all `analyzer`. If you override the `POSTGRES_*` values used by Docker, pass matching
+`SPRING_DATASOURCE_*` values to the backend. Keep `POLZA_API_KEY` and other secrets in environment variables, an IDE
+Run Configuration, or a local `.env` file; do not commit them.
+
 ## Codex CLI resume analysis provider
 
 The optional `CODEX_CLI` provider requires OpenAI Codex CLI to be installed and authenticated for the operating-system

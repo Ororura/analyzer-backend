@@ -2,6 +2,8 @@ package com.ororura.analyzer.vacancy.cache;
 
 import java.util.Map;
 
+import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.api.VacancyDtos.VacancySearchResult;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
@@ -10,20 +12,30 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair;
 import org.springframework.cache.support.NoOpCacheManager;
+import tools.jackson.databind.ObjectMapper;
 
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(VacancyCacheProperties.class)
 class VacancyCacheConfiguration {
     @Bean
     @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis", matchIfMissing = true)
-    CacheManager vacancyCacheManager(RedisConnectionFactory connectionFactory, VacancyCacheProperties properties) {
+    CacheManager vacancyCacheManager(RedisConnectionFactory connectionFactory, VacancyCacheProperties properties,
+            ObjectMapper objectMapper) {
         RedisCacheConfiguration defaults = RedisCacheConfiguration.defaultCacheConfig()
-                .disableCachingNullValues().prefixCacheNameWith("vacancy:");
+                .disableCachingNullValues().prefixCacheNameWith("vacancy:v2:");
+        RedisCacheConfiguration details = defaults.entryTtl(properties.detailsTtl()).serializeValuesWith(
+                SerializationPair.fromSerializer(new JacksonJsonRedisSerializer<>(objectMapper, Vacancy.class)));
+        RedisCacheConfiguration search = defaults.entryTtl(properties.searchTtl()).serializeValuesWith(
+                SerializationPair.fromSerializer(
+                        new JacksonJsonRedisSerializer<>(objectMapper, VacancySearchResult.class)));
         return RedisCacheManager.builder(connectionFactory).cacheDefaults(defaults)
+                .disableCreateOnMissingCache()
                 .withInitialCacheConfigurations(Map.of(
-                        VacancyCacheFacade.DETAILS, defaults.entryTtl(properties.detailsTtl()),
-                        VacancyCacheFacade.SEARCH, defaults.entryTtl(properties.searchTtl())))
+                        VacancyCacheFacade.DETAILS, details,
+                        VacancyCacheFacade.SEARCH, search))
                 .build();
     }
 

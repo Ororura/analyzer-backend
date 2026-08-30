@@ -1,0 +1,14 @@
+services:
+  postgres:
+    extends:
+      file: compose.yaml
+      service: postgres
+
+  redis:
+    extends:
+      file: compose.yaml
+      service: redis
+
+volumes:
+  postgres_data:
+  redis_data:
