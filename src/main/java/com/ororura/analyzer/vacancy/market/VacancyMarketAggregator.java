@@ -11,26 +11,31 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy;
 import org.springframework.stereotype.Component;
 
 @Component
 public class VacancyMarketAggregator {
 
-    private static final TechnologyTaxonomy TAXONOMY = new TechnologyTaxonomy();
+    private final TechnologyTaxonomy taxonomy;
 
-    private static final Set<String> TECHNOLOGIES = Set.copyOf(TAXONOMY.tiers().keySet());
-
-    private static final Map<String, Double> BASELINE_FREQUENCIES = baselineFrequencies();
-
-    public VacancyMarketData aggregate(List<MarketVacancy> vacancies, List<String> warnings) {
-        return aggregate(vacancies, warnings, "live");
+    public VacancyMarketAggregator(TechnologyTaxonomy taxonomy) {
+        this.taxonomy = taxonomy;
     }
 
-    public VacancyMarketData aggregate(List<MarketVacancy> vacancies, List<String> warnings, String source) {
+    public VacancyMarketData aggregate(ResumeAnalysisProfileDefinition profile,
+            List<MarketVacancy> vacancies, List<String> warnings) {
+        return aggregate(profile, vacancies, warnings, "live");
+    }
+
+    public VacancyMarketData aggregate(ResumeAnalysisProfileDefinition profile,
+            List<MarketVacancy> vacancies, List<String> warnings, String source) {
         if (vacancies.isEmpty()) {
-            return baseline(warnings.isEmpty() ? "HH.ru не вернул актуальные вакансии" : warnings.getFirst());
+            return baseline(profile, warnings.isEmpty() ? "HH.ru не вернул актуальные вакансии" : warnings.getFirst());
         }
+
+        Set<String> technologies = Set.copyOf(taxonomy.tiers(profile).keySet());
 
         Map<String, Integer> skillCounts = new LinkedHashMap<>();
         Map<String, Integer> experienceRequirements = new LinkedHashMap<>();
@@ -41,8 +46,8 @@ public class VacancyMarketAggregator {
         for (MarketVacancy vacancy : vacancies) {
             Set<String> vacancySkills = new LinkedHashSet<>();
             for (String skill : vacancy.skills()) {
-                String canonical = canonicalTechnology(skill);
-                if (TECHNOLOGIES.contains(canonical)) {
+                String canonical = taxonomy.canonical(profile, skill);
+                if (technologies.contains(canonical)) {
                     vacancySkills.add(canonical);
                 }
             }
@@ -56,7 +61,7 @@ public class VacancyMarketAggregator {
         }
 
         Map<String, Double> frequencies = "live".equals(source)
-                ? new LinkedHashMap<>(BASELINE_FREQUENCIES) : new LinkedHashMap<>();
+                ? new LinkedHashMap<>(profile.baselineSkillFrequencies()) : new LinkedHashMap<>();
         skillCounts.forEach((skill, count) -> frequencies.put(skill, roundShare(count, vacancies.size())));
         List<String> commonRequirements = requirementCounts.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
@@ -68,8 +73,8 @@ public class VacancyMarketAggregator {
                 List.copyOf(warnings));
     }
 
-    public VacancyMarketData baseline(String warning) {
-        return new VacancyMarketData("baseline", 0, new LinkedHashMap<>(BASELINE_FREQUENCIES),
+    public VacancyMarketData baseline(ResumeAnalysisProfileDefinition profile, String warning) {
+        return new VacancyMarketData("baseline", 0, new LinkedHashMap<>(profile.baselineSkillFrequencies()),
                 Map.of(), Map.of(), Map.of(), null, List.of(), List.of(),
                 warning == null || warning.isBlank() ? List.of() : List.of(warning));
     }
@@ -103,10 +108,6 @@ public class VacancyMarketAggregator {
         return value == null || value.length() <= maxLength ? value : value.substring(0, maxLength);
     }
 
-    String canonicalTechnology(String value) {
-        return TAXONOMY.canonical(value);
-    }
-
     private static void increment(Map<String, Integer> target, String value) {
         if (value != null && !value.isBlank()) {
             target.merge(value, 1, Integer::sum);
@@ -131,30 +132,4 @@ public class VacancyMarketAggregator {
         return BigDecimal.valueOf((double) count / total).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
-    private static Map<String, Double> baselineFrequencies() {
-        Map<String, Double> frequencies = new LinkedHashMap<>();
-        frequencies.put("Java", 0.93);
-        frequencies.put("Spring Boot", 0.89);
-        frequencies.put("REST API", 0.82);
-        frequencies.put("SQL", 0.81);
-        frequencies.put("PostgreSQL", 0.68);
-        frequencies.put("Git", 0.65);
-        frequencies.put("Backend development", 0.90);
-        frequencies.put("Hibernate/JPA", 0.61);
-        frequencies.put("Docker", 0.54);
-        frequencies.put("Testing", 0.52);
-        frequencies.put("Maven/Gradle", 0.49);
-        frequencies.put("Spring Data", 0.45);
-        frequencies.put("Spring Security", 0.39);
-        frequencies.put("Kafka", 0.41);
-        frequencies.put("RabbitMQ", 0.18);
-        frequencies.put("Redis", 0.27);
-        frequencies.put("Kubernetes", 0.19);
-        frequencies.put("Microservices", 0.35);
-        frequencies.put("Prometheus", 0.14);
-        frequencies.put("Grafana", 0.13);
-        frequencies.put("Linux", 0.29);
-        frequencies.put("CI/CD", 0.31);
-        return Map.copyOf(frequencies);
-    }
 }

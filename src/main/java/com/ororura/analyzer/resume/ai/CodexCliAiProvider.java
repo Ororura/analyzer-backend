@@ -73,10 +73,10 @@ public class CodexCliAiProvider implements AiProvider {
     }
 
     @Override
-    public LlmResumeAnalysisResponse analyze(String resumeText, VacancyMarketData market) {
+    public LlmResumeAnalysisResponse analyze(ResumeAnalysisProfile profile, String resumeText, VacancyMarketData market) {
         acquirePermit();
         try {
-            return performAnalysis(resumeText, market);
+            return performAnalysis(profile, resumeText, market);
         } finally {
             permits.release();
         }
@@ -89,10 +89,11 @@ public class CodexCliAiProvider implements AiProvider {
         }
     }
 
-    private LlmResumeAnalysisResponse performAnalysis(String resumeText, VacancyMarketData market) {
+    private LlmResumeAnalysisResponse performAnalysis(ResumeAnalysisProfile profile, String resumeText,
+            VacancyMarketData market) {
         Instant started = Instant.now();
         try (CodexWorkspace workspace = CodexWorkspace.create()) {
-            var prompt = promptFactory.create(resumeText, market);
+            var prompt = promptFactory.create(profile, resumeText, market);
             writeSchema(workspace.schemaPath(), prompt.schema());
             log.info("Codex analysis started provider={}", type());
             ProcessRunner.ProcessResult process = executeCodex(workspace, prompt.cliPrompt());

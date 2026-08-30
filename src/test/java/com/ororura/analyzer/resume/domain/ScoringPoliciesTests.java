@@ -4,6 +4,9 @@ import org.junit.jupiter.api.Test;
 
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult.CandidateLevel;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult.InterviewChance;
+import com.ororura.analyzer.resume.ai.SemanticAssessment;
+import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,10 +19,16 @@ class ScoringPoliciesTests {
 
     @Test
     void usesDeclaredTechnicalAndOverallWeights() {
-        assertThat(overall.technicalScore(10, 10, 10, 10, 10, 10, 10, 10)).isEqualTo(100);
-        assertThat(overall.technicalScore(0, 0, 0, 0, 0, 0, 0, 0)).isZero();
+        var criteria = new JavaBackendAnalysisProfile().criteria();
+        assertThat(overall.technicalScore(scores(criteria, 10), criteria)).isEqualTo(100);
+        assertThat(overall.technicalScore(scores(criteria, 0), criteria)).isZero();
         assertThat(overall.overall(80, 70, 7, 60, 6)).isEqualTo(73);
         assertThat(strength.calculate(80, 7, 6)).isEqualTo(74);
+    }
+
+    private static List<SemanticAssessment> scores(
+            List<com.ororura.analyzer.resume.ai.AnalysisCriterion> criteria, int score) {
+        return criteria.stream().map(value -> new SemanticAssessment(value.id(), score, List.of())).toList();
     }
 
     @Test

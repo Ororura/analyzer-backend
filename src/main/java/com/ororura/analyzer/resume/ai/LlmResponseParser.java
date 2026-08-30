@@ -77,17 +77,16 @@ public class LlmResponseParser {
     }
 
     private static void validateRequiredShape(JsonNode root) {
-        required(root, "technicalAssessment", "experienceAssessment", "resumeAssessment", "skills",
+        required(root, "semanticScores", "experienceAssessment", "resumeAssessment", "skills",
                 "employmentPeriods", "strengths", "weaknesses", "atsIssues", "recommendations", "warnings");
-        required(root.path("technicalAssessment"), "javaDepth", "springDepth", "backendDepth",
-                "sqlPostgresqlDepth", "hibernateJpaDepth", "infrastructureDepth", "messagingCacheDepth", "testingDepth");
         required(root.path("experienceAssessment"), "commercialRelevance", "experienceDescriptionQuality",
                 "responsibilityLevel");
         required(root.path("resumeAssessment"), "resumeQuality", "atsReadability");
         required(root.path("skills"), "confirmed", "weakEvidence", "missing");
-        requireScores(root.path("technicalAssessment"), "javaDepth", "springDepth", "backendDepth",
-                "sqlPostgresqlDepth", "hibernateJpaDepth", "infrastructureDepth", "messagingCacheDepth",
-                "testingDepth");
+        if (!root.path("semanticScores").isArray()) throw new IllegalArgumentException("Expected semanticScores array");
+        for (JsonNode assessment : root.path("semanticScores")) {
+            required(assessment, "criterion", "score", "evidence");
+        }
         requireScores(root.path("experienceAssessment"), "commercialRelevance", "experienceDescriptionQuality",
                 "responsibilityLevel");
         requireScores(root.path("resumeAssessment"), "resumeQuality", "atsReadability");

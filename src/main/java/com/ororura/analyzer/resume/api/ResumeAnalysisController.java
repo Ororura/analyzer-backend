@@ -3,6 +3,7 @@ package com.ororura.analyzer.resume.api;
 import com.ororura.analyzer.api.ApiErrorResponse;
 import com.ororura.analyzer.resume.application.ResumeAnalysisService;
 import com.ororura.analyzer.resume.ai.AiProviderType;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -49,7 +50,9 @@ public class ResumeAnalysisController {
     public ResumeAnalysisResult analyze(
             @RequestPart("file") @Schema(type = "string", format = "binary") MultipartFile file,
             @RequestParam(name = "provider", required = false) AiProviderType provider,
+            @RequestParam(name = "profile", required = false) ResumeAnalysisProfile profile,
             @RequestPart(name = "analysis", required = false) VacancyAnalysisRequest analysis) {
-        return analysis == null ? service.analyze(file, provider) : service.analyze(file, provider, analysis);
+        return service.analyze(file, provider, profile,
+                analysis == null ? VacancyAnalysisRequest.autoMarket() : analysis);
     }
 }

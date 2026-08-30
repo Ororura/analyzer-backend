@@ -15,11 +15,9 @@ public class ResumeAnalysisSchemaFactory {
         this.objectMapper = objectMapper;
     }
 
-    public JsonNode create() {
+    public JsonNode create(ResumeAnalysisProfileDefinition profile) {
         ObjectNode properties = objectMapper.createObjectNode();
-        properties.set("technicalAssessment", scoredObject("javaDepth", "springDepth", "backendDepth",
-                "sqlPostgresqlDepth", "hibernateJpaDepth", "infrastructureDepth", "messagingCacheDepth",
-                "testingDepth"));
+        properties.set("semanticScores", semanticScores(profile));
         properties.set("experienceAssessment", scoredObject("commercialRelevance", "experienceDescriptionQuality",
                 "responsibilityLevel"));
         properties.set("resumeAssessment", scoredObject("resumeQuality", "atsReadability"));
@@ -31,6 +29,26 @@ public class ResumeAnalysisSchemaFactory {
         properties.set("recommendations", stringArray());
         properties.set("warnings", stringArray());
         return closedRequiredObject(properties);
+    }
+
+    private ObjectNode semanticScores(ResumeAnalysisProfileDefinition profile) {
+        ObjectNode properties = objectMapper.createObjectNode();
+        ObjectNode criterion = stringType();
+        ArrayNode allowed = objectMapper.createArrayNode();
+        profile.criteria().forEach(value -> allowed.add(value.id()));
+        criterion.set("enum", allowed);
+        properties.set("criterion", criterion);
+        ObjectNode score = integerType();
+        score.put("minimum", 0);
+        score.put("maximum", 10);
+        properties.set("score", score);
+        properties.set("evidence", stringArray());
+        ObjectNode result = objectMapper.createObjectNode();
+        result.put("type", "array");
+        result.put("minItems", profile.criteria().size());
+        result.put("maxItems", profile.criteria().size());
+        result.set("items", closedRequiredObject(properties));
+        return result;
     }
 
     private ObjectNode scoredObject(String... fields) {

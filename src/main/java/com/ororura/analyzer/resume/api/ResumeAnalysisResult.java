@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.ororura.analyzer.resume.ai.AiProviderType;
+import com.ororura.analyzer.resume.ai.SemanticAssessment;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(name = "ResumeAnalysisResult")
@@ -46,18 +47,14 @@ public record ResumeAnalysisResult(
     }
 
     public record Scores(
-            int java,
-            int spring,
-            int backend,
-            int sqlPostgresql,
-            int hibernateJpa,
-            int infrastructure,
-            int messagingCache,
-            int testing,
+            List<SemanticAssessment> semanticScores,
             int commercialExperience,
             int experienceDescription,
             int ats,
             int resumeQuality) {
+        public Scores {
+            semanticScores = List.copyOf(semanticScores);
+        }
     }
 
     public record Experience(int commercialMonths, int commercialYears, int remainingMonths) {

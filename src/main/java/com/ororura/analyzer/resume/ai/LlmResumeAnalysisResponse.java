@@ -3,7 +3,7 @@ package com.ororura.analyzer.resume.ai;
 import java.util.List;
 
 public record LlmResumeAnalysisResponse(
-        TechnicalAssessment technicalAssessment,
+        List<SemanticAssessment> semanticScores,
         ExperienceAssessment experienceAssessment,
         ResumeAssessment resumeAssessment,
         Skills skills,
@@ -15,7 +15,7 @@ public record LlmResumeAnalysisResponse(
         List<String> warnings) {
 
     public LlmResumeAnalysisResponse {
-        require(technicalAssessment, "technicalAssessment");
+        semanticScores = copy(semanticScores, "semanticScores");
         require(experienceAssessment, "experienceAssessment");
         require(resumeAssessment, "resumeAssessment");
         require(skills, "skills");
@@ -25,21 +25,6 @@ public record LlmResumeAnalysisResponse(
         atsIssues = copy(atsIssues, "atsIssues");
         recommendations = copy(recommendations, "recommendations");
         warnings = copy(warnings, "warnings");
-    }
-
-    public record TechnicalAssessment(
-            SemanticScore javaDepth,
-            SemanticScore springDepth,
-            SemanticScore backendDepth,
-            SemanticScore sqlPostgresqlDepth,
-            SemanticScore hibernateJpaDepth,
-            SemanticScore infrastructureDepth,
-            SemanticScore messagingCacheDepth,
-            SemanticScore testingDepth) {
-        public TechnicalAssessment {
-            requireScores(javaDepth, springDepth, backendDepth, sqlPostgresqlDepth, hibernateJpaDepth,
-                    infrastructureDepth, messagingCacheDepth, testingDepth);
-        }
     }
 
     public record ExperienceAssessment(

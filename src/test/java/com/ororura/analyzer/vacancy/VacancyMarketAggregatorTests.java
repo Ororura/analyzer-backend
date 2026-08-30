@@ -6,17 +6,21 @@ import com.ororura.analyzer.vacancy.market.MarketVacancy;
 import com.ororura.analyzer.vacancy.market.VacancyMarketAggregator;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import com.ororura.analyzer.vacancy.model.Salary;
+import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
+import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
+import com.ororura.analyzer.resume.domain.TechnologyTaxonomy;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class VacancyMarketAggregatorTests {
 
-    private final VacancyMarketAggregator aggregator = new VacancyMarketAggregator();
+    private final VacancyMarketAggregator aggregator = new VacancyMarketAggregator(new TechnologyTaxonomy());
+    private final JavaBackendAnalysisProfile profile = new JavaBackendAnalysisProfile();
 
     @Test
     void canonicalizesAliasesAndCalculatesVacancyShares() {
-        VacancyMarketData result = aggregator.aggregate(List.of(
+        VacancyMarketData result = aggregator.aggregate(profile, List.of(
                 vacancy(List.of("Spring", "REST endpoints")),
                 vacancy(List.of("Spring Boot"))), List.of());
 
@@ -30,7 +34,7 @@ class VacancyMarketAggregatorTests {
 
     @Test
     void returnsBaselineWithWarningForEmptySourceData() {
-        VacancyMarketData result = aggregator.aggregate(List.of(), List.of("timeout"));
+        VacancyMarketData result = aggregator.aggregate(profile, List.of(), List.of("timeout"));
 
         assertThat(result.source()).isEqualTo("baseline");
         assertThat(result.sampleSize()).isZero();
@@ -40,13 +44,21 @@ class VacancyMarketAggregatorTests {
     }
 
     @Test
+    void doesNotReuseJavaBaselineForReactProfile() {
+        VacancyMarketData result = aggregator.aggregate(new ReactFrontendAnalysisProfile(), List.of(), List.of());
+
+        assertThat(result.skillFrequencies()).isEmpty();
+        assertThat(result.warnings()).isNotEmpty();
+    }
+
+    @Test
     void aggregatesSalaryRequirementsAndKeepsFullContextOnlyForSingleVacancy() {
         MarketVacancy vacancy = new MarketVacancy("hh-1", "Java Developer", List.of("Java"),
                 List.of("Spring Boot", "SQL"), List.of("Build APIs"), "Untrusted vacancy text",
                 new Salary(120_000, 180_000, "RUR", true), "1–3 года", "Полная занятость", null, "REMOTE");
 
-        VacancyMarketData single = aggregator.aggregate(List.of(vacancy), List.of(), "single_vacancy");
-        VacancyMarketData multiple = aggregator.aggregate(List.of(vacancy, vacancy), List.of(), "selected_vacancies");
+        VacancyMarketData single = aggregator.aggregate(profile, List.of(vacancy), List.of(), "single_vacancy");
+        VacancyMarketData multiple = aggregator.aggregate(profile, List.of(vacancy, vacancy), List.of(), "selected_vacancies");
 
         assertThat(single.salaryStatistics().minimum()).isEqualTo(120_000);
         assertThat(single.salaryStatistics().maximum()).isEqualTo(180_000);

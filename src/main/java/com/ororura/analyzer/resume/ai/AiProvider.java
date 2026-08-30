@@ -12,5 +12,9 @@ public interface AiProvider {
 
     Optional<String> model();
 
-    LlmResumeAnalysisResponse analyze(String resumeText, VacancyMarketData market);
+    LlmResumeAnalysisResponse analyze(ResumeAnalysisProfile profile, String resumeText, VacancyMarketData market);
+
+    default LlmResumeAnalysisResponse analyze(String resumeText, VacancyMarketData market) {
+        return analyze(ResumeAnalysisProfile.defaultProfile(), resumeText, market);
+    }
 }

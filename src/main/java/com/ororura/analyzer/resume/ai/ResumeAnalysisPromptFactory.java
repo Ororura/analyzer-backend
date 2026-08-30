@@ -8,9 +8,9 @@ import tools.jackson.databind.node.ObjectNode;
 @Component
 public class ResumeAnalysisPromptFactory {
 
-    static final String SYSTEM_PROMPT = """
+    static final String BASE_SYSTEM_PROMPT = """
             ROLE
-            Ты анализируешь резюме кандидата на Java Backend позиции.
+            Ты анализируешь резюме кандидата на %s позиции.
             Твоя задача: извлечь подтверждённые резюме факты, выполнить ограниченную семантическую оценку
             этих фактов по правилам ниже, использовать рыночный контекст только в разрешённых случаях
             и вернуть результат строго по output schema.
@@ -49,23 +49,11 @@ public class ResumeAnalysisPromptFactory {
             9 — очень глубокая подтверждённая экспертиза; 10 — исключительный уровень с многочисленными
             сильными подтверждениями. Не повышай score из-за одного присутствия технологии в Skills.
 
-            javaDepth — глубина подтверждённой работы с Java в backend-задачах, включая API, collections,
-            streams, exceptions, concurrency или JVM-related задачи, только если они явно описаны.
-            springDepth — подтверждённое применение Spring/Spring Boot: Web, Data, Security, transactions,
-            configuration и integrations. Одного упоминания Spring недостаточно для высокого score.
-            backendDepth — разработка backend-сервисов, API, бизнес-логики, интеграций, архитектуры,
-            производительности и надёжности; общий title Backend Developer сам по себе недостаточен.
-            sqlPostgresqlDepth — практическая работа с SQL/PostgreSQL: запросы, joins, схема, индексы,
-            транзакции, миграции и оптимизация; список технологий без задач является слабым evidence.
-            hibernateJpaDepth — mappings, relationships, fetching, queries, transactions и performance
-            в Hibernate/JPA; простое упоминание ORM недостаточно.
-            infrastructureDepth — подтверждённые deployment/operations-задачи с Docker, Kubernetes, Linux,
-            CI/CD или observability; перечень инструментов без выполненных задач является слабым evidence.
-            messagingCacheDepth — практическое применение Kafka, RabbitMQ, Redis, messaging patterns или cache;
-            общее упоминание технологии не подтверждает глубину.
-            testingDepth — unit/integration/component tests, JUnit, Mockito, Testcontainers, test strategy;
-            учитывай конкретные тестовые задачи, а не только названия библиотек.
-            commercialRelevance — подтверждённая релевантность именно коммерческого опыта Java Backend;
+            PROFILE-SPECIFIC CRITERIA
+            %s
+
+            COMMON CRITERIA
+            commercialRelevance — подтверждённая релевантность коммерческого опыта выбранному профилю;
             учебные и pet-проекты не являются коммерческим опытом.
             experienceDescriptionQuality — конкретность задач, ответственности, технических деталей и результатов.
             responsibilityLevel — явно описанные ownership, самостоятельные решения, архитектурная ответственность,
@@ -107,16 +95,29 @@ public class ResumeAnalysisPromptFactory {
 
     private final ObjectMapper objectMapper;
     private final ResumeAnalysisSchemaFactory schemaFactory;
+    private final ResumeAnalysisProfileRegistry profileRegistry;
 
-    public ResumeAnalysisPromptFactory(ObjectMapper objectMapper, ResumeAnalysisSchemaFactory schemaFactory) {
+    public ResumeAnalysisPromptFactory(ObjectMapper objectMapper, ResumeAnalysisSchemaFactory schemaFactory,
+            ResumeAnalysisProfileRegistry profileRegistry) {
         this.objectMapper = objectMapper;
         this.schemaFactory = schemaFactory;
+        this.profileRegistry = profileRegistry;
     }
 
     public ResumeAnalysisPrompt create(String resumeText, VacancyMarketData market) {
+        return create(ResumeAnalysisProfile.defaultProfile(), resumeText, market);
+    }
+
+    public ResumeAnalysisPrompt create(ResumeAnalysisProfile profile, String resumeText, VacancyMarketData market) {
+        ResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
         ObjectNode input = objectMapper.createObjectNode();
+        input.put("analysisProfile", profile.name());
         input.put("resumeText", resumeText);
         input.set("marketContext", objectMapper.valueToTree(market));
-        return new ResumeAnalysisPrompt(SYSTEM_PROMPT, input, schemaFactory.create());
+        String criteria = definition.criteria().stream()
+                .map(value -> value.id() + " — " + value.description() + ".")
+                .collect(java.util.stream.Collectors.joining("\n"));
+        String systemPrompt = BASE_SYSTEM_PROMPT.formatted(definition.targetRole(), criteria);
+        return new ResumeAnalysisPrompt(systemPrompt, input, schemaFactory.create(definition));
     }
 }

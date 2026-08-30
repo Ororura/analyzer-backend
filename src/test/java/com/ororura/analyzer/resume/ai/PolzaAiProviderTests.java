@@ -26,7 +26,8 @@ class PolzaAiProviderTests {
     private final PolzaClient client = mock(PolzaClient.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final PolzaAiProvider provider = new PolzaAiProvider(client,
-            new ResumeAnalysisPromptFactory(objectMapper, new ResumeAnalysisSchemaFactory(objectMapper)),
+            new ResumeAnalysisPromptFactory(objectMapper, new ResumeAnalysisSchemaFactory(objectMapper),
+                    LlmBoundaryTests.profileRegistry()),
             new LlmResponseParser(objectMapper),
             new PolzaProperties(true, URI.create("https://polza.ai/api/v1"), "test-model", "secret",
                     Duration.ofSeconds(1)));
@@ -34,7 +35,7 @@ class PolzaAiProviderTests {
     @Test
     void parsesSuccessfulResponseWithoutRepairRequest() {
         when(client.requestCompletion(any())).thenReturn(LlmBoundaryTests.validJson());
-        assertThat(provider.analyze("resume", market()).technicalAssessment().javaDepth().score()).isEqualTo(8);
+        assertThat(provider.analyze("resume", market()).semanticScores().getFirst().score()).isEqualTo(8);
     }
 
     @Test

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult.CandidateLevel;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult.InterviewChance;
@@ -25,17 +26,17 @@ public class ResumeAnalysisAssembler {
         this.resumeProperties = resumeProperties;
     }
 
-    public ResumeAnalysisResult assemble(LlmResumeAnalysisResponse llm, ExperienceSummary experience, TechnologyProfile technologies, VacancyMarketData market, int commercialScore, int ats, int overall, int candidateStrength, CandidateLevel level, InterviewChance hrChance, InterviewChance technicalChance, Instant generatedAt, AiProviderType provider, String model) {
-        LlmResumeAnalysisResponse.TechnicalAssessment technical = llm.technicalAssessment();
+    public ResumeAnalysisResult assemble(ResumeAnalysisProfileDefinition profile, LlmResumeAnalysisResponse llm,
+            ExperienceSummary experience, TechnologyProfile technologies, VacancyMarketData market,
+            int commercialScore, int ats, int overall, int candidateStrength, CandidateLevel level,
+            InterviewChance hrChance, InterviewChance technicalChance, Instant generatedAt,
+            AiProviderType provider, String model) {
         LlmResumeAnalysisResponse.ExperienceAssessment experienceAssessment = llm.experienceAssessment();
         ResumeAnalysisResult.Scores scores = new ResumeAnalysisResult.Scores(
-                technical.javaDepth().score(), technical.springDepth().score(), technical.backendDepth().score(),
-                technical.sqlPostgresqlDepth().score(), technical.hibernateJpaDepth().score(),
-                technical.infrastructureDepth().score(), technical.messagingCacheDepth().score(),
-                technical.testingDepth().score(), commercialScore,
+                llm.semanticScores(), commercialScore,
                 experienceAssessment.experienceDescriptionQuality().score(), ats,
                 llm.resumeAssessment().resumeQuality().score() * 10);
-        return new ResumeAnalysisResult(resumeProperties.targetRole(), level, scores, overall, candidateStrength,
+        return new ResumeAnalysisResult(profile.targetRole(), level, scores, overall, candidateStrength,
                 hrChance, technicalChance,
                 new ResumeAnalysisResult.Experience(experience.commercialMonths(), experience.commercialYears(),
                         experience.remainingMonths()),

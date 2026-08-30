@@ -20,7 +20,8 @@ public class LlmResponseValidator {
         this.clock = clock;
     }
 
-    public List<EmploymentPeriod> validateAndConvert(LlmResumeAnalysisResponse response) {
+    public List<EmploymentPeriod> validateAndConvert(LlmResumeAnalysisResponse response,
+            ResumeAnalysisProfileDefinition profile) {
         YearMonth currentMonth = YearMonth.now(clock);
         List<EmploymentPeriod> periods = new ArrayList<>();
         for (LlmResumeAnalysisResponse.EmploymentPeriod value : response.employmentPeriods()) {
@@ -38,7 +39,7 @@ public class LlmResponseValidator {
                 periods.add(period);
             }
         }
-        validateScores(response);
+        validateScores(response, profile);
         validateStrings(response.skills().confirmed());
         validateStrings(response.skills().weakEvidence());
         validateStrings(response.skills().missing());
@@ -84,11 +85,15 @@ public class LlmResponseValidator {
         }
     }
 
-    private static void validateScores(LlmResumeAnalysisResponse response) {
-        var technical = response.technicalAssessment();
-        validateScore(technical.javaDepth(), technical.springDepth(), technical.backendDepth(),
-                technical.sqlPostgresqlDepth(), technical.hibernateJpaDepth(), technical.infrastructureDepth(),
-                technical.messagingCacheDepth(), technical.testingDepth());
+    private static void validateScores(LlmResumeAnalysisResponse response, ResumeAnalysisProfileDefinition profile) {
+        java.util.Set<String> expected = profile.criteria().stream()
+                .map(AnalysisCriterion::id).collect(java.util.stream.Collectors.toSet());
+        java.util.Set<String> actual = new java.util.HashSet<>();
+        for (SemanticAssessment assessment : response.semanticScores()) {
+            if (!actual.add(assessment.criterion())) throw invalid();
+            validateStrings(assessment.evidence());
+        }
+        if (!actual.equals(expected)) throw invalid();
         var experience = response.experienceAssessment();
         validateScore(experience.commercialRelevance(), experience.experienceDescriptionQuality(),
                 experience.responsibilityLevel());

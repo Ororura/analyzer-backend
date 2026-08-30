@@ -11,6 +11,9 @@ import com.ororura.analyzer.resume.ai.AiProviderRegistry;
 import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.LlmResponseValidator;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileDefinition;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
 import com.ororura.analyzer.resume.api.VacancyAnalysisRequest;
 import com.ororura.analyzer.resume.api.VacancyAnalysisMode;
@@ -59,13 +62,14 @@ public class ResumeAnalysisService {
     private final ResumeAnalysisAssembler assembler;
     private final ResumeAnalysisProperties properties;
     private final Clock clock;
+    private final ResumeAnalysisProfileRegistry profileRegistry;
 
     public ResumeAnalysisService(PdfFileValidator fileValidator, PdfTextExtractor textExtractor,
             VacancyMarketService marketService, AiProviderRegistry aiProviderRegistry, LlmResponseValidator llmValidator,
             ExperienceCalculator experienceCalculator, TechnologyTaxonomy taxonomy, AtsScoreCalculator atsCalculator,
             OverallScoreCalculator overallCalculator, CandidateStrengthCalculator strengthCalculator,
             CandidateLevelPolicy levelPolicy, InterviewChancePolicy chancePolicy, ResumeAnalysisAssembler assembler,
-            ResumeAnalysisProperties properties, Clock clock) {
+            ResumeAnalysisProperties properties, Clock clock, ResumeAnalysisProfileRegistry profileRegistry) {
         this.fileValidator = fileValidator;
         this.textExtractor = textExtractor;
         this.marketService = marketService;
@@ -81,6 +85,7 @@ public class ResumeAnalysisService {
         this.assembler = assembler;
         this.properties = properties;
         this.clock = clock;
+        this.profileRegistry = profileRegistry;
     }
 
     public ResumeAnalysisResult analyze(MultipartFile file) {
@@ -93,11 +98,16 @@ public class ResumeAnalysisService {
 
     public ResumeAnalysisResult analyze(MultipartFile file, AiProviderType requestedProvider,
             VacancyAnalysisRequest vacancyAnalysis) {
+        return analyze(file, requestedProvider, null, vacancyAnalysis);
+    }
+
+    public ResumeAnalysisResult analyze(MultipartFile file, AiProviderType requestedProvider,
+            ResumeAnalysisProfile requestedProfile, VacancyAnalysisRequest vacancyAnalysis) {
         String analysisId = UUID.randomUUID().toString();
         Instant started = clock.instant();
         log.info("resume analysis started analysisId={} fileSize={}", analysisId, file == null ? 0 : file.getSize());
         try {
-            return analyze(file, requestedProvider, vacancyAnalysis, analysisId, started);
+            return analyze(file, requestedProvider, requestedProfile, vacancyAnalysis, analysisId, started);
         } catch (VacancySelectionException exception) {
             ResumeErrorCode code = exception.getMessage().contains("maximumProcessingSize")
                     ? ResumeErrorCode.SELECTION_TOO_LARGE : ResumeErrorCode.INVALID_SELECTION;
@@ -120,7 +130,8 @@ public class ResumeAnalysisService {
     }
 
     private ResumeAnalysisResult analyze(MultipartFile file, AiProviderType requestedProvider,
-            VacancyAnalysisRequest vacancyAnalysis, String analysisId, Instant started) {
+            ResumeAnalysisProfile requestedProfile, VacancyAnalysisRequest vacancyAnalysis,
+            String analysisId, Instant started) {
         byte[] pdf = fileValidator.validate(file);
         log.info("pdf validated analysisId={} fileSize={}", analysisId, pdf.length);
         String text = textExtractor.extract(pdf);
@@ -130,32 +141,30 @@ public class ResumeAnalysisService {
                     "Extracted resume text exceeds the configured size limit");
         }
         AiProvider aiProvider = aiProviderRegistry.get(requestedProvider);
+        ResumeAnalysisProfile profile = requestedProfile == null
+                ? ResumeAnalysisProfile.defaultProfile() : requestedProfile;
+        ResumeAnalysisProfileDefinition definition = profileRegistry.get(profile);
         VacancyAnalysisMode mode = vacancyAnalysis == null || vacancyAnalysis.mode() == null
                 ? VacancyAnalysisMode.AUTO_MARKET : vacancyAnalysis.mode();
         VacancyMarketData market = mode == VacancyAnalysisMode.AUTO_MARKET
-                ? marketService.load(properties.targetRole())
-                : marketService.load(vacancyAnalysis, properties.targetRole());
+                ? marketService.load(profile, definition.targetRole())
+                : marketService.load(profile, vacancyAnalysis, definition.targetRole());
         log.info("market context resolved analysisId={} source={} sampleSize={}",
                 analysisId, market.source(), market.sampleSize());
-        LlmResumeAnalysisResponse llm = aiProvider.analyze(text, market);
+        LlmResumeAnalysisResponse llm = aiProvider.analyze(profile, text, market);
         log.info("AI request completed analysisId={} provider={}", analysisId, aiProvider.type());
-        List<EmploymentPeriod> periods = llmValidator.validateAndConvert(llm);
+        List<EmploymentPeriod> periods = llmValidator.validateAndConvert(llm, definition);
         log.info("LLM response validated analysisId={}", analysisId);
 
         ExperienceSummary experience = experienceCalculator.calculate(periods);
         int commercialScore = experienceCalculator.commercialScore(experience.commercialMonths());
-        TechnologyProfile technologies = taxonomy.profile(text, llm.skills().confirmed(),
+        TechnologyProfile technologies = taxonomy.profile(definition, text, llm.skills().confirmed(),
                 llm.skills().weakEvidence(), llm.skills().missing());
         AtsScore ats = atsCalculator.calculate(llm.resumeAssessment().atsReadability().score(),
                 llm.resumeAssessment().resumeQuality().score(),
                 llm.experienceAssessment().experienceDescriptionQuality().score(),
-                commercialScore, technologies, market);
-        LlmResumeAnalysisResponse.TechnicalAssessment technical = llm.technicalAssessment();
-        int technicalScore = overallCalculator.technicalScore(technical.javaDepth().score(),
-                technical.springDepth().score(), technical.backendDepth().score(),
-                technical.sqlPostgresqlDepth().score(), technical.hibernateJpaDepth().score(),
-                technical.infrastructureDepth().score(), technical.messagingCacheDepth().score(),
-                technical.testingDepth().score());
+                commercialScore, technologies, market, definition);
+        int technicalScore = overallCalculator.technicalScore(llm.semanticScores(), definition.criteria());
         int overall = overallCalculator.overall(technicalScore, ats.total(), commercialScore,
                 llm.resumeAssessment().resumeQuality().score() * 10,
                 llm.experienceAssessment().responsibilityLevel().score());
@@ -167,7 +176,7 @@ public class ResumeAnalysisService {
         var technicalChance = chancePolicy.technical(technicalScore, overall);
         Instant completed = clock.instant();
         log.info("deterministic calculations completed analysisId={} ats={} overall={}", analysisId, ats.total(), overall);
-        ResumeAnalysisResult result = assembler.assemble(llm, experience, technologies, market, commercialScore,
+        ResumeAnalysisResult result = assembler.assemble(definition, llm, experience, technologies, market, commercialScore,
                 ats.total(), overall, strength, level, hrChance, technicalChance, completed,
                 aiProvider.type(), aiProvider.model().orElse(null));
         log.info("resume analysis completed analysisId={} durationMs={}", analysisId,

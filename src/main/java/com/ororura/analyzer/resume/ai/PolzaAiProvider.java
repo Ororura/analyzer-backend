@@ -48,9 +48,9 @@ public class PolzaAiProvider implements AiProvider {
     }
 
     @Override
-    public LlmResumeAnalysisResponse analyze(String resumeText, VacancyMarketData market) {
+    public LlmResumeAnalysisResponse analyze(ResumeAnalysisProfile profile, String resumeText, VacancyMarketData market) {
         try {
-            var prompt = promptFactory.create(resumeText, market);
+            var prompt = promptFactory.create(profile, resumeText, market);
             CompletionRequest request = new CompletionRequest(
                     List.of(new CompletionMessage("system", StringNode.valueOf(prompt.systemInstruction())),
                             new CompletionMessage("user", prompt.input())),

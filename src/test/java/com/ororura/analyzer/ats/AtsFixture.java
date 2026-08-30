@@ -64,7 +64,8 @@ final class AtsFixture {
     }
 
     static VacancyMarketData baselineMarket() {
-        return new VacancyMarketAggregator().baseline(null);
+        return new VacancyMarketAggregator(new com.ororura.analyzer.resume.domain.TechnologyTaxonomy())
+                .baseline(new com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile(), null);
     }
 
     static LlmTechnologyAssessment technology(String name, String status, String evidence) {

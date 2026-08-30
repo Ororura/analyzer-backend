@@ -12,6 +12,11 @@ import com.ororura.analyzer.resume.ai.AiProviderRegistry;
 import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.LlmResponseValidator;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
+import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
+import com.ororura.analyzer.resume.ai.SemanticAssessment;
+import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
+import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
 import com.ororura.analyzer.resume.api.VacancyAnalysisMode;
 import com.ororura.analyzer.resume.api.VacancyAnalysisRequest;
@@ -52,17 +57,23 @@ class ResumeAnalysisServiceTests {
         byte[] bytes = "validated".getBytes();
         String text = "Java Spring Backend PostgreSQL Docker";
         VacancyMarketData market = market();
+        VacancyMarketData reactMarket = reactMarket();
         when(fileValidator.validate(file)).thenReturn(bytes);
         when(extractor.extract(bytes)).thenReturn(text);
-        when(marketService.load("Java Backend Developer")).thenReturn(market);
+        when(marketService.load(ResumeAnalysisProfile.JAVA_BACKEND, "Java Backend Developer")).thenReturn(market);
+        when(marketService.load(ResumeAnalysisProfile.REACT_FRONTEND, "React Frontend Developer"))
+                .thenReturn(reactMarket);
         VacancyAnalysisRequest selectedRequest = new VacancyAnalysisRequest(VacancyAnalysisMode.SELECTED_VACANCIES,
                 null, new VacancySelection(SelectionMode.SELECTED, List.of("hh-1", "hh-2"), null, List.of()));
         VacancyAnalysisRequest singleRequest = new VacancyAnalysisRequest(
                 VacancyAnalysisMode.SINGLE_VACANCY, "hh-1", null);
-        when(marketService.load(selectedRequest, "Java Backend Developer")).thenReturn(market);
-        when(marketService.load(singleRequest, "Java Backend Developer")).thenReturn(market);
-        when(polza.analyze(text, market)).thenReturn(llm());
-        when(codex.analyze(text, market)).thenReturn(llm());
+        when(marketService.load(ResumeAnalysisProfile.JAVA_BACKEND, selectedRequest, "Java Backend Developer"))
+                .thenReturn(market);
+        when(marketService.load(ResumeAnalysisProfile.JAVA_BACKEND, singleRequest, "Java Backend Developer"))
+                .thenReturn(market);
+        when(polza.analyze(ResumeAnalysisProfile.JAVA_BACKEND, text, market)).thenReturn(llm());
+        when(codex.analyze(ResumeAnalysisProfile.JAVA_BACKEND, text, market)).thenReturn(llm());
+        when(polza.analyze(ResumeAnalysisProfile.REACT_FRONTEND, text, reactMarket)).thenReturn(reactLlm());
         AiProviderRegistry registry = new AiProviderRegistry(List.of(polza, codex),
                 new AiProperties(AiProviderType.POLZA));
 
@@ -71,12 +82,15 @@ class ResumeAnalysisServiceTests {
         ResumeAnalysisService service = new ResumeAnalysisService(fileValidator, extractor, marketService, registry,
                 new LlmResponseValidator(clock), new ExperienceCalculator(), taxonomy, ats,
                 new OverallScoreCalculator(), new CandidateStrengthCalculator(), new CandidateLevelPolicy(),
-                new InterviewChancePolicy(), new ResumeAnalysisAssembler(properties), properties, clock);
+                new InterviewChancePolicy(), new ResumeAnalysisAssembler(properties), properties, clock,
+                profileRegistry(properties));
 
         ResumeAnalysisResult result = service.analyze(file, AiProviderType.POLZA);
         ResumeAnalysisResult codexResult = service.analyze(file, AiProviderType.CODEX_CLI);
         ResumeAnalysisResult selectedResult = service.analyze(file, AiProviderType.POLZA, selectedRequest);
         ResumeAnalysisResult singleResult = service.analyze(file, AiProviderType.POLZA, singleRequest);
+        ResumeAnalysisResult reactResult = service.analyze(file, AiProviderType.POLZA,
+                ResumeAnalysisProfile.REACT_FRONTEND, VacancyAnalysisRequest.autoMarket());
 
         assertThat(result.experience()).isEqualTo(new ResumeAnalysisResult.Experience(16, 1, 4));
         assertThat(result.scores().commercialExperience()).isEqualTo(7);
@@ -101,6 +115,10 @@ class ResumeAnalysisServiceTests {
         assertThat(singleResult.vacancyFit().requiredSkills()).contains("Java", "Spring Boot");
         assertThat(singleResult.vacancyFit().experienceRelevanceScore()).isEqualTo(7);
         assertThat(singleResult.vacancyFit().risks()).containsExactly("weakness");
+        assertThat(reactResult.targetRole()).isEqualTo("React Frontend Developer");
+        assertThat(reactResult.scores().semanticScores()).extracting(SemanticAssessment::criterion)
+                .contains("javascriptDepth", "typescriptDepth", "reactDepth")
+                .doesNotContain("javaDepth", "springDepth");
     }
 
     @Test
@@ -120,7 +138,7 @@ class ResumeAnalysisServiceTests {
                 mock(ExperienceCalculator.class), mock(TechnologyTaxonomy.class), mock(AtsScoreCalculator.class),
                 mock(OverallScoreCalculator.class), mock(CandidateStrengthCalculator.class),
                 mock(CandidateLevelPolicy.class), mock(InterviewChancePolicy.class),
-                mock(ResumeAnalysisAssembler.class), properties, clock);
+                mock(ResumeAnalysisAssembler.class), properties, clock, profileRegistry(properties));
 
         assertThatThrownBy(() -> service.analyze(file, AiProviderType.CODEX_CLI))
                 .isInstanceOf(ResumeAnalysisException.class)
@@ -139,8 +157,10 @@ class ResumeAnalysisServiceTests {
 
     private static LlmResumeAnalysisResponse llm() {
         return new LlmResumeAnalysisResponse(
-                new LlmResumeAnalysisResponse.TechnicalAssessment(
-                        score(8), score(7), score(8), score(7), score(6), score(6), score(7), score(6)),
+                List.of(assessment("javaDepth", 8), assessment("springDepth", 7),
+                        assessment("backendDepth", 8), assessment("sqlPostgresqlDepth", 7),
+                        assessment("hibernateJpaDepth", 6), assessment("infrastructureDepth", 6),
+                        assessment("messagingCacheDepth", 7), assessment("testingDepth", 6)),
                 new LlmResumeAnalysisResponse.ExperienceAssessment(score(7), score(8), score(6)),
                 new LlmResumeAnalysisResponse.ResumeAssessment(score(7), score(8)),
                 new LlmResumeAnalysisResponse.Skills(List.of("Java", "Postgres"), List.of("Docker"), List.of("K8s")),
@@ -149,14 +169,44 @@ class ResumeAnalysisServiceTests {
                 List.of("strength"), List.of("weakness"), List.of("issue"), List.of("recommendation"), List.of());
     }
 
+    private static LlmResumeAnalysisResponse reactLlm() {
+        return new LlmResumeAnalysisResponse(
+                List.of(assessment("javascriptDepth", 7), assessment("typescriptDepth", 7),
+                        assessment("reactDepth", 8), assessment("frontendDepth", 8),
+                        assessment("htmlCssDepth", 6), assessment("stateManagementDepth", 6),
+                        assessment("webPlatformDepth", 7), assessment("testingDepth", 5),
+                        assessment("frontendArchitectureDepth", 6)),
+                new LlmResumeAnalysisResponse.ExperienceAssessment(score(7), score(8), score(6)),
+                new LlmResumeAnalysisResponse.ResumeAssessment(score(7), score(8)),
+                new LlmResumeAnalysisResponse.Skills(List.of("React", "TypeScript"), List.of(), List.of()),
+                List.of(new LlmResumeAnalysisResponse.EmploymentPeriod(
+                        "Example", "Frontend Developer", 2025, 5, null, null, true)),
+                List.of("strength"), List.of("weakness"), List.of("issue"), List.of("recommendation"), List.of());
+    }
+
     private static LlmResumeAnalysisResponse.SemanticScore score(int value) {
         return new LlmResumeAnalysisResponse.SemanticScore(value, List.of("evidence"));
+    }
+
+    private static SemanticAssessment assessment(String criterion, int value) {
+        return new SemanticAssessment(criterion, value, List.of("evidence"));
+    }
+
+    private static ResumeAnalysisProfileRegistry profileRegistry(ResumeAnalysisProperties properties) {
+        return new ResumeAnalysisProfileRegistry(List.of(
+                new JavaBackendAnalysisProfile(properties), new ReactFrontendAnalysisProfile()));
     }
 
     private static VacancyMarketData market() {
         return new VacancyMarketData("test", 10,
                 Map.of("Java", 1.0, "Spring Boot", .8, "PostgreSQL", .6,
                         "Backend development", .9, "Docker", .5, "Kubernetes", .2),
+                Map.of(), Map.of(), Map.of(), List.of());
+    }
+
+    private static VacancyMarketData reactMarket() {
+        return new VacancyMarketData("test", 10,
+                Map.of("React", 1.0, "TypeScript", .8, "JavaScript", .7),
                 Map.of(), Map.of(), Map.of(), List.of());
     }
 }

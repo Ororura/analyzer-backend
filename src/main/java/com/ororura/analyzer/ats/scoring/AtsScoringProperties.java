@@ -7,6 +7,7 @@ import java.util.Map;
 import com.ororura.analyzer.ats.domain.MatchingAssessment.TechnologyStatus;
 import com.ororura.analyzer.ats.domain.MatchingAssessment.TechnologyTier;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy;
+import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
 
 public final class AtsScoringProperties {
 
@@ -40,12 +41,13 @@ public final class AtsScoringProperties {
     }
 
     public static String canonicalTechnology(String value) {
-        return TAXONOMY.canonical(value);
+        return TAXONOMY.canonical(JavaBackendAnalysisProfile.technologyDefinitions(), value);
     }
 
     private static Map<String, TechnologyTier> technologyTiers() {
         Map<String, TechnologyTier> tiers = new LinkedHashMap<>();
-        TAXONOMY.tiers().forEach((technology, tier) -> tiers.put(technology, TechnologyTier.valueOf(tier.name())));
+        TAXONOMY.tiers(JavaBackendAnalysisProfile.technologyDefinitions())
+                .forEach((technology, tier) -> tiers.put(technology, TechnologyTier.valueOf(tier.name())));
         return Collections.unmodifiableMap(tiers);
     }
 }
