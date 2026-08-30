@@ -2,8 +2,8 @@ package com.ororura.analyzer.vacancy.cache;
 
 import java.util.Map;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.VacancySearchResult;
+import com.ororura.analyzer.vacancy.model.Vacancy;
+import com.ororura.analyzer.vacancy.model.VacancySearchResult;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;

@@ -3,24 +3,30 @@ package com.ororura.analyzer.vacancy;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Salary;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.model.Salary;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.ororura.analyzer.vacancy.cache.VacancyCacheFacade;
 import com.ororura.analyzer.vacancy.cache.VacancyMarketVersionService;
-import com.ororura.analyzer.vacancy.cache.VacancySearchCacheKey;
+import com.ororura.analyzer.vacancy.search.VacancySearchCacheKey;
+import com.ororura.analyzer.vacancy.search.VacancyCriteriaNormalizer;
+import com.ororura.analyzer.vacancy.search.VacancyQueryService;
+import com.ororura.analyzer.vacancy.search.VacancySearchCriteria;
+import com.ororura.analyzer.vacancy.search.VacancySearchService;
+import com.ororura.analyzer.vacancy.search.VacancySort;
+import com.ororura.analyzer.vacancy.search.WorkFormat;
 import org.springframework.cache.support.NoOpCacheManager;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class VacancyServiceTests {
+public class VacancyQueryServiceTests {
 
     private final VacancySearchService searchService = mock(VacancySearchService.class);
     private final VacancyMarketVersionService marketVersion = mock(VacancyMarketVersionService.class);
-    private final VacancyService service = new VacancyService(searchService, new VacancyCriteriaNormalizer(),
+    private final VacancyQueryService service = new VacancyQueryService(searchService, new VacancyCriteriaNormalizer(),
             new VacancyCacheFacade(new NoOpCacheManager()), new VacancySearchCacheKey(), marketVersion);
 
     @Test

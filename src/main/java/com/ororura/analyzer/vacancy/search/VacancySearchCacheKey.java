@@ -1,11 +1,10 @@
-package com.ororura.analyzer.vacancy.cache;
+package com.ororura.analyzer.vacancy.search;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
-import com.ororura.analyzer.vacancy.VacancySearchCriteria;
 import com.ororura.analyzer.vacancy.persistence.VacancyNormalizer;
 import org.springframework.stereotype.Component;
 

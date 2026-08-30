@@ -2,7 +2,8 @@ package com.ororura.analyzer.vacancy.market;
 
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Salary;
+import com.ororura.analyzer.vacancy.model.Salary;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 
 public record MarketVacancy(
         String id,
@@ -25,5 +26,11 @@ public record MarketVacancy(
 
     public MarketVacancy(List<String> skills, String experience, String employment, String schedule, String workFormat) {
         this(null, null, skills, List.of(), List.of(), null, null, experience, employment, schedule, workFormat);
+    }
+
+    public static MarketVacancy from(Vacancy vacancy) {
+        return new MarketVacancy(vacancy.id(), vacancy.title(), vacancy.skills(), vacancy.requirements(),
+                vacancy.responsibilities(), vacancy.description(), vacancy.salary(), vacancy.experience(),
+                vacancy.employment(), vacancy.schedule(), vacancy.workFormat());
     }
 }

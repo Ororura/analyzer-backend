@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Locale;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 import org.springframework.stereotype.Component;
 
 @Component

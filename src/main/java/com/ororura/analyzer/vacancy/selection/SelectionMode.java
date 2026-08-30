@@ -1,4 +1,4 @@
-package com.ororura.analyzer.vacancy;
+package com.ororura.analyzer.vacancy.selection;
 
 public enum SelectionMode {
     SELECTED,

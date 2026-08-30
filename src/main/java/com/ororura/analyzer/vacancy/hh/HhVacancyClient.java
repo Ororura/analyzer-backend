@@ -6,10 +6,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import com.ororura.analyzer.vacancy.VacancyProvider;
-import com.ororura.analyzer.vacancy.VacancyProviderSearchResult;
-import com.ororura.analyzer.vacancy.VacancySearchCriteria;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.provider.VacancyProvider;
+import com.ororura.analyzer.vacancy.provider.VacancyProviderSearchResult;
+import com.ororura.analyzer.vacancy.provider.VacancySourceException;
+import com.ororura.analyzer.vacancy.search.VacancySearchCriteria;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 import com.ororura.analyzer.vacancy.hh.HhLocationResolver.ResolvedQuery;
 import com.ororura.analyzer.vacancy.hh.dto.HhDtos.SearchPage;
 import com.ororura.analyzer.vacancy.hh.dto.HhDtos.SourceVacancy;

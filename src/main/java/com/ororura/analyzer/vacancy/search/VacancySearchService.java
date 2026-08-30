@@ -1,11 +1,11 @@
-package com.ororura.analyzer.vacancy;
+package com.ororura.analyzer.vacancy.search;
 
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 import com.ororura.analyzer.vacancy.persistence.VacancyEntityMapper;
 import com.ororura.analyzer.vacancy.persistence.VacancyRepository;
-import com.ororura.analyzer.vacancy.persistence.VacancySpecifications;
+import com.ororura.analyzer.vacancy.search.VacancySpecifications;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.ororura.analyzer.vacancy.hh;
+package com.ororura.analyzer.vacancy.provider;
 
 public class VacancySourceException extends RuntimeException {
 

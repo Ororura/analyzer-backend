@@ -1,6 +1,8 @@
-package com.ororura.analyzer.vacancy;
+package com.ororura.analyzer.vacancy.selection;
 
 import java.util.List;
+
+import com.ororura.analyzer.vacancy.search.VacancySearchCriteria;
 
 public record VacancySelection(
         SelectionMode mode,

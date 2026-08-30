@@ -1,11 +1,13 @@
-package com.ororura.analyzer.vacancy;
+package com.ororura.analyzer.vacancy.selection;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.model.Vacancy;
+import com.ororura.analyzer.vacancy.search.VacancyQueryService;
+import com.ororura.analyzer.vacancy.search.VacancySearchCriteria;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,10 +16,10 @@ public class VacancySelectionResolver {
     public static final int MAX_SELECTION_SIZE = 200;
     private static final int BATCH_SIZE = 50;
 
-    private final VacancyService vacancyService;
+    private final VacancyQueryService queryService;
 
-    public VacancySelectionResolver(VacancyService vacancyService) {
-        this.vacancyService = vacancyService;
+    public VacancySelectionResolver(VacancyQueryService queryService) {
+        this.queryService = queryService;
     }
 
     public List<Vacancy> resolve(VacancySelection selection) {
@@ -33,7 +35,7 @@ public class VacancySelectionResolver {
         ensureLimit(distinct.size());
         List<Vacancy> result = new ArrayList<>(distinct.size());
         for (int start = 0; start < distinct.size(); start += BATCH_SIZE) {
-            result.addAll(vacancyService.getByIds(distinct.subList(start, Math.min(start + BATCH_SIZE, distinct.size()))));
+            result.addAll(queryService.getByIds(distinct.subList(start, Math.min(start + BATCH_SIZE, distinct.size()))));
         }
         if (result.isEmpty()) {
             throw new VacancySelectionException("По выбранным критериям не найдено вакансий");
@@ -46,7 +48,7 @@ public class VacancySelectionResolver {
         List<Vacancy> result = new ArrayList<>();
         int page = 0;
         while (true) {
-            VacancyService.DomainSearchResult batch = vacancyService.searchDomain(criteria.withPage(page, BATCH_SIZE));
+            VacancyQueryService.DomainSearchResult batch = queryService.searchDomain(criteria.withPage(page, BATCH_SIZE));
             if (batch.totalElements() != null && batch.totalElements() - exclusions.size() > MAX_SELECTION_SIZE) {
                 throw tooLarge();
             }

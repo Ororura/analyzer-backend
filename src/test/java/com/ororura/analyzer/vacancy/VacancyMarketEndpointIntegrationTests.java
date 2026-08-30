@@ -4,7 +4,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 import com.ororura.analyzer.vacancy.persistence.VacancyContentHasher;
 import com.ororura.analyzer.vacancy.persistence.VacancyEntity;
 import com.ororura.analyzer.vacancy.persistence.VacancyNormalizer;
@@ -31,7 +31,7 @@ class VacancyMarketEndpointIntegrationTests {
     @BeforeEach
     void seedLocalMarket() {
         repository.deleteAll();
-        Vacancy vacancy = VacancyServiceTests.vacancy("1", "Acme", "Java", 150_000);
+        Vacancy vacancy = VacancyQueryServiceTests.vacancy("1", "Acme", "Java", 150_000);
         vacancy = new Vacancy(vacancy.id(), vacancy.hhId(), "Java Backend Developer", vacancy.company(),
                 vacancy.companyId(), vacancy.url(), vacancy.location(), vacancy.salary(), vacancy.description(),
                 List.of("Java", "Spring Boot"), vacancy.requirements(), vacancy.responsibilities(), vacancy.experience(),

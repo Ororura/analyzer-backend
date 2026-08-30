@@ -1,10 +1,11 @@
-package com.ororura.analyzer.vacancy.persistence;
+package com.ororura.analyzer.vacancy.search;
 
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.VacancySearchCriteria;
+import com.ororura.analyzer.vacancy.persistence.VacancyEntity;
+import com.ororura.analyzer.vacancy.persistence.VacancySkillEntity;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;

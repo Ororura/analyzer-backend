@@ -2,7 +2,7 @@ package com.ororura.analyzer.vacancy.hh.dto;
 
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Salary;
+import com.ororura.analyzer.vacancy.model.Salary;
 
 public final class HhDtos {
 

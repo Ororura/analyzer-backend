@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Salary;
+import com.ororura.analyzer.vacancy.model.Salary;
 import com.ororura.analyzer.vacancy.hh.dto.HhDtos.SearchPage;
 import com.ororura.analyzer.vacancy.hh.dto.HhDtos.SourceVacancy;
 import org.jsoup.Jsoup;

@@ -2,6 +2,12 @@ package com.ororura.analyzer.vacancy;
 
 import java.util.List;
 
+import com.ororura.analyzer.vacancy.search.VacancyQueryService;
+import com.ororura.analyzer.vacancy.search.VacancySearchCriteria;
+import com.ororura.analyzer.vacancy.selection.SelectionMode;
+import com.ororura.analyzer.vacancy.selection.VacancySelection;
+import com.ororura.analyzer.vacancy.selection.VacancySelectionException;
+import com.ororura.analyzer.vacancy.selection.VacancySelectionResolver;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -12,14 +18,14 @@ import static org.mockito.Mockito.when;
 
 class VacancySelectionResolverTests {
 
-    private final VacancyService service = mock(VacancyService.class);
+    private final VacancyQueryService service = mock(VacancyQueryService.class);
     private final VacancySelectionResolver resolver = new VacancySelectionResolver(service);
 
     @Test
     void resolvesSelectedIdsInOrderAndDeduplicates() {
         when(service.getByIds(List.of("1", "2"))).thenReturn(List.of(
-                VacancyServiceTests.vacancy("1", "A", "Java", 100_000),
-                VacancyServiceTests.vacancy("2", "B", "Spring Boot", 120_000)));
+                VacancyQueryServiceTests.vacancy("1", "A", "Java", 100_000),
+                VacancyQueryServiceTests.vacancy("2", "B", "Spring Boot", 120_000)));
 
         var result = resolver.resolve(new VacancySelection(SelectionMode.SELECTED,
                 List.of("1", "2", "1"), null, List.of()));
@@ -30,9 +36,9 @@ class VacancySelectionResolverTests {
     @Test
     void resolvesAllMatchingAndAppliesExclusions() {
         VacancySearchCriteria criteria = criteria();
-        when(service.searchDomain(any())).thenReturn(new VacancyService.DomainSearchResult(List.of(
-                VacancyServiceTests.vacancy("1", "A", "Java", 100_000),
-                VacancyServiceTests.vacancy("2", "B", "Java", 100_000)),
+        when(service.searchDomain(any())).thenReturn(new VacancyQueryService.DomainSearchResult(List.of(
+                VacancyQueryServiceTests.vacancy("1", "A", "Java", 100_000),
+                VacancyQueryServiceTests.vacancy("2", "B", "Java", 100_000)),
                 1, 2L, false, List.of(), criteria));
 
         var result = resolver.resolve(new VacancySelection(SelectionMode.ALL_MATCHING,
@@ -46,7 +52,7 @@ class VacancySelectionResolverTests {
         assertThatThrownBy(() -> resolver.resolve(new VacancySelection(
                 SelectionMode.SELECTED, List.of(), null, List.of())))
                 .isInstanceOf(VacancySelectionException.class).hasMessageContaining("vacancyIds");
-        when(service.searchDomain(any())).thenReturn(new VacancyService.DomainSearchResult(
+        when(service.searchDomain(any())).thenReturn(new VacancyQueryService.DomainSearchResult(
                 List.of(), 10, 30_000L, true, List.of(), criteria()));
         assertThatThrownBy(() -> resolver.resolve(new VacancySelection(
                 SelectionMode.ALL_MATCHING, List.of(), criteria(), List.of())))

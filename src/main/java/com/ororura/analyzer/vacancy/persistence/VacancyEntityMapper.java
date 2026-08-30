@@ -2,8 +2,8 @@ package com.ororura.analyzer.vacancy.persistence;
 
 import java.time.Instant;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Salary;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.model.Salary;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 import org.springframework.stereotype.Component;
 
 @Component

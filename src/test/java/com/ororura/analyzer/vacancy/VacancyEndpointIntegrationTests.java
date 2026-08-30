@@ -4,8 +4,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Salary;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.model.Salary;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 import com.ororura.analyzer.vacancy.persistence.VacancyContentHasher;
 import com.ororura.analyzer.vacancy.persistence.VacancyEntity;
 import com.ororura.analyzer.vacancy.persistence.VacancyNormalizer;

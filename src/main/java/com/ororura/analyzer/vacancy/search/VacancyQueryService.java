@@ -1,18 +1,17 @@
-package com.ororura.analyzer.vacancy;
+package com.ororura.analyzer.vacancy.search;
 
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Pagination;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.VacancySearchItem;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.VacancySearchResult;
+import com.ororura.analyzer.vacancy.model.Pagination;
+import com.ororura.analyzer.vacancy.model.Vacancy;
+import com.ororura.analyzer.vacancy.model.VacancySearchItem;
+import com.ororura.analyzer.vacancy.model.VacancySearchResult;
 import com.ororura.analyzer.vacancy.cache.VacancyCacheFacade;
 import com.ororura.analyzer.vacancy.cache.VacancyMarketVersionService;
-import com.ororura.analyzer.vacancy.cache.VacancySearchCacheKey;
 import org.springframework.stereotype.Service;
 
 @Service
-public class VacancyService {
+public class VacancyQueryService {
     private static final int MAX_PAGES = 10;
     private static final int MAX_VACANCIES = 200;
 
@@ -22,7 +21,7 @@ public class VacancyService {
     private final VacancySearchCacheKey cacheKey;
     private final VacancyMarketVersionService marketVersion;
 
-    public VacancyService(VacancySearchService searchService, VacancyCriteriaNormalizer criteriaNormalizer,
+    public VacancyQueryService(VacancySearchService searchService, VacancyCriteriaNormalizer criteriaNormalizer,
             VacancyCacheFacade cache, VacancySearchCacheKey cacheKey, VacancyMarketVersionService marketVersion) {
         this.searchService = searchService;
         this.criteriaNormalizer = criteriaNormalizer;

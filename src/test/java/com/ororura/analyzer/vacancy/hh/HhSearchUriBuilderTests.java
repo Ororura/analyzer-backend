@@ -4,7 +4,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.VacancySearchQuery;
+import com.ororura.analyzer.vacancy.search.VacancySearchQuery;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -5,9 +5,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.VacancyProvider;
-import com.ororura.analyzer.vacancy.VacancyProviderSearchResult;
-import com.ororura.analyzer.vacancy.VacancySearchCriteria;
+import com.ororura.analyzer.vacancy.provider.VacancyProvider;
+import com.ororura.analyzer.vacancy.provider.VacancyProviderSearchResult;
+import com.ororura.analyzer.vacancy.search.VacancySearchCriteria;
 import com.ororura.analyzer.vacancy.cache.VacancyCacheFacade;
 import com.ororura.analyzer.vacancy.cache.VacancyMarketVersionService;
 import org.slf4j.Logger;
@@ -51,7 +51,7 @@ public class VacancySyncService {
             }
             fetched += result.items().size();
             failed += result.warnings().size();
-            List<List<com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy>> batches = batches(
+            List<List<com.ororura.analyzer.vacancy.model.Vacancy>> batches = batches(
                     result.items(), Math.max(1, properties.batchSize()));
             for (var batch : batches) {
                 try {

@@ -1,7 +1,7 @@
 package com.ororura.analyzer.vacancy.api;
 
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
-import com.ororura.analyzer.vacancy.VacancyMarketService;
+import com.ororura.analyzer.vacancy.market.VacancyMarketService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.validation.annotation.Validated;

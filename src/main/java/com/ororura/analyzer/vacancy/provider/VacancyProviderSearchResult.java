@@ -1,8 +1,8 @@
-package com.ororura.analyzer.vacancy;
+package com.ororura.analyzer.vacancy.provider;
 
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 
 public record VacancyProviderSearchResult(
         List<Vacancy> items,

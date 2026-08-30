@@ -82,12 +82,12 @@ public class VacancyMarketAggregator {
     private static VacancyMarketData.SalaryStatistics salaryStatistics(List<MarketVacancy> vacancies) {
         var salaries = vacancies.stream().map(MarketVacancy::salary).filter(java.util.Objects::nonNull).toList();
         if (salaries.isEmpty()) return null;
-        List<Integer> from = salaries.stream().map(com.ororura.analyzer.vacancy.api.VacancyDtos.Salary::from)
+        List<Integer> from = salaries.stream().map(com.ororura.analyzer.vacancy.model.Salary::from)
                 .filter(java.util.Objects::nonNull).toList();
-        List<Integer> to = salaries.stream().map(com.ororura.analyzer.vacancy.api.VacancyDtos.Salary::to)
+        List<Integer> to = salaries.stream().map(com.ororura.analyzer.vacancy.model.Salary::to)
                 .filter(java.util.Objects::nonNull).toList();
         List<Integer> all = new ArrayList<>(from); all.addAll(to);
-        String currency = salaries.stream().map(com.ororura.analyzer.vacancy.api.VacancyDtos.Salary::currency)
+        String currency = salaries.stream().map(com.ororura.analyzer.vacancy.model.Salary::currency)
                 .filter(java.util.Objects::nonNull)
                 .collect(Collectors.groupingBy(value -> value, Collectors.counting())).entrySet().stream()
                 .max(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse(null);

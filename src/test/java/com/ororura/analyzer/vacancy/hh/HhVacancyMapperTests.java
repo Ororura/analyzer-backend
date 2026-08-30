@@ -2,8 +2,8 @@ package com.ororura.analyzer.vacancy.hh;
 
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Salary;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.model.Salary;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 import com.ororura.analyzer.vacancy.hh.dto.HhDtos.SourceVacancy;
 import org.junit.jupiter.api.Test;
 

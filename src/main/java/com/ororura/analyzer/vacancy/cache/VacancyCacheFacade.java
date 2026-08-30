@@ -2,8 +2,8 @@ package com.ororura.analyzer.vacancy.cache;
 
 import java.util.function.Supplier;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.VacancySearchResult;
+import com.ororura.analyzer.vacancy.model.Vacancy;
+import com.ororura.analyzer.vacancy.model.VacancySearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;

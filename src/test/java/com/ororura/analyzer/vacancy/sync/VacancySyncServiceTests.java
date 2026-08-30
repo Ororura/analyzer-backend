@@ -2,10 +2,10 @@ package com.ororura.analyzer.vacancy.sync;
 
 import java.time.Duration;
 
-import com.ororura.analyzer.vacancy.VacancyProvider;
+import com.ororura.analyzer.vacancy.provider.VacancyProvider;
 import com.ororura.analyzer.vacancy.cache.VacancyCacheFacade;
 import com.ororura.analyzer.vacancy.cache.VacancyMarketVersionService;
-import com.ororura.analyzer.vacancy.hh.VacancySourceException;
+import com.ororura.analyzer.vacancy.provider.VacancySourceException;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

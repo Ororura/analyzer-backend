@@ -3,26 +3,25 @@ package com.ororura.analyzer.vacancy.api;
 import java.util.List;
 import java.time.LocalDate;
 
-import com.ororura.analyzer.vacancy.VacancySearchCriteria;
-import com.ororura.analyzer.vacancy.VacancyService;
-import com.ororura.analyzer.vacancy.VacancySort;
-import com.ororura.analyzer.vacancy.WorkFormat;
+import com.ororura.analyzer.vacancy.search.VacancySearchCriteria;
+import com.ororura.analyzer.vacancy.search.VacancyQueryService;
+import com.ororura.analyzer.vacancy.model.VacancySearchResult;
+import com.ororura.analyzer.vacancy.search.VacancySort;
+import com.ororura.analyzer.vacancy.search.WorkFormat;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.ororura.analyzer.vacancy.api.VacancyDtos.VacancySearchResult;
-import static com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
-
 @RestController
 @RequestMapping("/api")
 public class VacancyController {
 
-    private final VacancyService service;
+    private final VacancyQueryService queryService;
 
-    public VacancyController(VacancyService service) {
-        this.service = service;
+    public VacancyController(VacancyQueryService queryService) {
+        this.queryService = queryService;
     }
 
     @GetMapping("/vacancies")
@@ -51,7 +50,7 @@ public class VacancyController {
             @RequestParam(required = false) Integer salary,
             @RequestParam(required = false) Boolean onlyWithSalary) {
         int resolvedPageSize = pageSize != null ? pageSize : perPage != null ? perPage : 20;
-        return service.search(new VacancySearchCriteria(
+        return queryService.search(new VacancySearchCriteria(
                 query != null ? query : text, title, area != null ? area : location, employer,
                 experience, level, workFormat, salaryFrom != null ? salaryFrom : salary, salaryTo, currency,
                 salaryOnly != null ? salaryOnly : onlyWithSalary, technologies, publishedFrom, sort,
@@ -60,6 +59,6 @@ public class VacancyController {
 
     @GetMapping("/vacancies/{id}")
     public Vacancy vacancy(@org.springframework.web.bind.annotation.PathVariable String id) {
-        return service.getById(id);
+        return queryService.getById(id);
     }
 }

@@ -1,6 +1,6 @@
 package com.ororura.analyzer.resume.api;
 
-import com.ororura.analyzer.vacancy.VacancySelection;
+import com.ororura.analyzer.vacancy.selection.VacancySelection;
 
 public record VacancyAnalysisRequest(
         VacancyAnalysisMode mode,

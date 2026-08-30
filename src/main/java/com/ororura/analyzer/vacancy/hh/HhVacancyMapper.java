@@ -2,7 +2,7 @@ package com.ororura.analyzer.vacancy.hh;
 
 import java.time.Instant;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 import com.ororura.analyzer.vacancy.hh.dto.HhDtos.SourceVacancy;
 import org.springframework.stereotype.Component;
 

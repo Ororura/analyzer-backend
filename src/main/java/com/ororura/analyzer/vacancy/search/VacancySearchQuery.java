@@ -1,4 +1,4 @@
-package com.ororura.analyzer.vacancy;
+package com.ororura.analyzer.vacancy.search;
 
 import java.util.List;
 

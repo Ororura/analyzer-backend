@@ -1,8 +1,7 @@
-package com.ororura.analyzer.vacancy.cache;
+package com.ororura.analyzer.vacancy.search;
 
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.VacancySearchCriteria;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

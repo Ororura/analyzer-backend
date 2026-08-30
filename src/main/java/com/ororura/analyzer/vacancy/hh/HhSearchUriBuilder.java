@@ -2,8 +2,8 @@ package com.ororura.analyzer.vacancy.hh;
 
 import java.net.URI;
 
-import com.ororura.analyzer.vacancy.VacancySearchCriteria;
-import com.ororura.analyzer.vacancy.VacancySearchQuery;
+import com.ororura.analyzer.vacancy.search.VacancySearchCriteria;
+import com.ororura.analyzer.vacancy.search.VacancySearchQuery;
 import org.springframework.web.util.UriComponentsBuilder;
 
 final class HhSearchUriBuilder {

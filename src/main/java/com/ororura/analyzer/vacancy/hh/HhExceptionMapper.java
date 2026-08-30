@@ -2,6 +2,7 @@ package com.ororura.analyzer.vacancy.hh;
 
 import java.net.SocketTimeoutException;
 
+import com.ororura.analyzer.vacancy.provider.VacancySourceException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 

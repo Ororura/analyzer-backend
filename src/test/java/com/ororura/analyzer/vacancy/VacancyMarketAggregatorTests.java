@@ -5,7 +5,7 @@ import java.util.List;
 import com.ororura.analyzer.vacancy.market.MarketVacancy;
 import com.ororura.analyzer.vacancy.market.VacancyMarketAggregator;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Salary;
+import com.ororura.analyzer.vacancy.model.Salary;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

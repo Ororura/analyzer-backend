@@ -2,8 +2,8 @@ package com.ororura.analyzer.vacancy.sync;
 
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.VacancyServiceTests;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.VacancyQueryServiceTests;
+import com.ororura.analyzer.vacancy.model.Vacancy;
 import com.ororura.analyzer.vacancy.persistence.VacancyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ class VacancySyncPersistenceIntegrationTests {
     @Test
     void createsLeavesUnchangedUpdatesArchivesAndReactivates() {
         persistence.markStarted();
-        Vacancy initial = VacancyServiceTests.vacancy("7", "Acme", "Java", 100_000);
+        Vacancy initial = VacancyQueryServiceTests.vacancy("7", "Acme", "Java", 100_000);
         VacancySyncBatchResult created = persistence.persistBatch(List.of(initial));
         assertThat(created.created()).isOne();
         assertThat(jdbc.queryForObject("select count(*) from vacancy_skills where normalized_skill = 'java'",
@@ -35,7 +35,7 @@ class VacancySyncPersistenceIntegrationTests {
         assertThat(unchanged.unchanged()).isOne();
         assertThat(unchanged.marketVersion()).isNull();
 
-        Vacancy changed = VacancyServiceTests.vacancy("7", "Acme", "Spring Boot", 120_000);
+        Vacancy changed = VacancyQueryServiceTests.vacancy("7", "Acme", "Spring Boot", 120_000);
         VacancySyncBatchResult updated = persistence.persistBatch(List.of(changed));
         assertThat(updated.updated()).isOne();
         assertThat(updated.marketVersion()).isNotNull();

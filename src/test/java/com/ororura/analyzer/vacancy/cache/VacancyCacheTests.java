@@ -6,8 +6,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.ororura.analyzer.vacancy.api.VacancyDtos.Pagination;
-import com.ororura.analyzer.vacancy.api.VacancyDtos.VacancySearchResult;
+import com.ororura.analyzer.vacancy.model.Pagination;
+import com.ororura.analyzer.vacancy.model.VacancySearchResult;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
