@@ -8,20 +8,26 @@ import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.ororura.analyzer.vacancy.cache.VacancyCacheFacade;
+import com.ororura.analyzer.vacancy.cache.VacancyMarketVersionService;
+import com.ororura.analyzer.vacancy.cache.VacancySearchCacheKey;
+import org.springframework.cache.support.NoOpCacheManager;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class VacancyServiceTests {
+public class VacancyServiceTests {
 
-    private final VacancyProvider provider = mock(VacancyProvider.class);
-    private final VacancyService service = new VacancyService(provider);
+    private final VacancySearchService searchService = mock(VacancySearchService.class);
+    private final VacancyMarketVersionService marketVersion = mock(VacancyMarketVersionService.class);
+    private final VacancyService service = new VacancyService(searchService, new VacancyCriteriaNormalizer(),
+            new VacancyCacheFacade(new NoOpCacheManager()), new VacancySearchCacheKey(), marketVersion);
 
     @Test
     void appliesBackendFiltersAndReturnsLightweightPagination() {
         VacancySearchCriteria criteria = criteria(List.of("spring-boot"));
-        when(provider.search(org.mockito.ArgumentMatchers.any())).thenReturn(new VacancyProviderSearchResult(
-                List.of(vacancy("1", "Acme", "Spring Boot", 150_000),
-                        vacancy("2", "Other", "Python", 90_000)), 3, 60L, true, List.of()));
+        when(searchService.search(org.mockito.ArgumentMatchers.any())).thenReturn(new VacancySearchService.LocalSearchResult(
+                List.of(vacancy("1", "Acme", "Spring Boot", 150_000)), 3, 60L, true, List.of()));
 
         var result = service.search(criteria);
 
@@ -37,7 +43,7 @@ class VacancyServiceTests {
     @Test
     void delegatesDetailsByStableId() {
         Vacancy expected = vacancy("42", "Acme", "Java", 180_000);
-        when(provider.getById("hh-42")).thenReturn(expected);
+        when(searchService.getById("hh-42")).thenReturn(expected);
         assertThat(service.getById("hh-42")).isSameAs(expected);
     }
 
@@ -47,7 +53,7 @@ class VacancyServiceTests {
                 LocalDate.of(2026, 1, 1), VacancySort.DATE, 0, 20, List.of(), List.of());
     }
 
-    static Vacancy vacancy(String id, String company, String skill, int salary) {
+    public static Vacancy vacancy(String id, String company, String skill, int salary) {
         return new Vacancy("hh-" + id, id, "Java Developer", company, "77", "https://hh.ru/vacancy/" + id,
                 "Москва", new Salary(salary, salary + 20_000, "RUR", true),
                 "Develop with " + skill, List.of(skill), List.of("Java required"), List.of("Build services"),

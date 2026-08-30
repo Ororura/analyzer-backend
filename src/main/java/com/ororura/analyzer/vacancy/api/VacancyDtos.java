@@ -1,6 +1,7 @@
 package com.ororura.analyzer.vacancy.api;
 
 import java.util.List;
+import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.ororura.analyzer.vacancy.market.MarketVacancy;
@@ -11,7 +12,7 @@ public final class VacancyDtos {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record Salary(Integer from, Integer to, String currency, Boolean gross) {
+    public record Salary(Integer from, Integer to, String currency, Boolean gross) implements Serializable {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -34,7 +35,7 @@ public final class VacancyDtos {
             String workFormat,
             String source,
             String publishedAt,
-            String normalizedAt) {
+            String normalizedAt) implements Serializable {
 
         public Vacancy {
             skills = List.copyOf(skills);
@@ -62,7 +63,7 @@ public final class VacancyDtos {
             String url,
             List<String> skills,
             List<String> requirements,
-            String source) {
+            String source) implements Serializable {
         public VacancySearchItem {
             skills = skills == null ? List.of() : List.copyOf(skills);
             requirements = requirements == null ? List.of() : List.copyOf(requirements);
@@ -76,7 +77,7 @@ public final class VacancyDtos {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record Pagination(int page, int pageSize, Integer totalPages, boolean hasNext) {
+    public record Pagination(int page, int pageSize, Integer totalPages, boolean hasNext) implements Serializable {
     }
 
     public record VacancySearchResult(
@@ -86,7 +87,7 @@ public final class VacancyDtos {
             Integer totalPages,
             Long totalElements,
             Pagination pagination,
-            List<String> warnings) {
+            List<String> warnings) implements Serializable {
         public VacancySearchResult {
             items = List.copyOf(items);
             warnings = List.copyOf(warnings);

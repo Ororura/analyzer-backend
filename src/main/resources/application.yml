@@ -5,8 +5,6 @@ spring:
     default: dev
   lifecycle:
     timeout-per-shutdown-phase: 20s
-  mvc:
-    throw-exception-if-no-handler-found: true
   web:
     resources:
       add-mappings: false
@@ -14,6 +12,32 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 11MB
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/analyzer}
+    username: ${SPRING_DATASOURCE_USERNAME:analyzer}
+    password: ${SPRING_DATASOURCE_PASSWORD:analyzer}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+  flyway:
+    enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      connect-timeout: ${REDIS_CONNECT_TIMEOUT:1s}
+      timeout: ${REDIS_TIMEOUT:1s}
+      repositories:
+        enabled: false
+  cache:
+    type: redis
 
 server:
   shutdown: graceful
@@ -25,6 +49,19 @@ app:
     base-url: ${HH_BASE_URL:https://hh.ru}
     connect-timeout: 3s
     read-timeout: 8s
+  vacancy:
+    cache:
+      details-ttl: ${VACANCY_DETAILS_CACHE_TTL:45m}
+      search-ttl: ${VACANCY_SEARCH_CACHE_TTL:5m}
+    sync:
+      enabled: ${VACANCY_SYNC_ENABLED:true}
+      interval: ${VACANCY_SYNC_INTERVAL:30m}
+      initial-delay: ${VACANCY_SYNC_INITIAL_DELAY:10s}
+      query: ${VACANCY_SYNC_QUERY:Java Backend Developer}
+      area: ${VACANCY_SYNC_AREA:}
+      pages-per-cycle: ${VACANCY_SYNC_PAGES_PER_CYCLE:4}
+      page-size: ${VACANCY_SYNC_PAGE_SIZE:50}
+      batch-size: ${VACANCY_SYNC_BATCH_SIZE:50}
   polza:
     enabled: ${POLZA_ENABLED:true}
     base-url: ${POLZA_BASE_URL:https://polza.ai/api/v1}

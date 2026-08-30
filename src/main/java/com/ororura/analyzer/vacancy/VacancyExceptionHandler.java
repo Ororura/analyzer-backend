@@ -31,6 +31,11 @@ public class VacancyExceptionHandler {
         return ResponseEntity.badRequest().body(new VacancyError("INVALID_SELECTION", exception.getMessage()));
     }
 
+    @ExceptionHandler(VacancyNotFoundException.class)
+    public ResponseEntity<VacancyError> handleNotFound(VacancyNotFoundException exception) {
+        return ResponseEntity.status(404).body(new VacancyError("NOT_FOUND", exception.getMessage()));
+    }
+
     @ExceptionHandler(VacancySourceException.class)
     public ResponseEntity<VacancyError> handleUpstream(VacancySourceException exception) {
         ResponseEntity.BodyBuilder response = ResponseEntity.status(exception.getStatus());

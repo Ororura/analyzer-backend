@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.ToDoubleFunction;
+import java.util.stream.Stream;
 
 import com.ororura.analyzer.ats.domain.AtsScores;
 import com.ororura.analyzer.ats.domain.AtsScores.ScreeningChance;
@@ -31,14 +32,13 @@ import static com.ororura.analyzer.ats.scoring.AtsScoringProperties.*;
 public class AtsScorer {
 
     public int clampScore(double value) {
-        return (int) Math.clamp(Math.round(value), 0, 100);
+        return Math.clamp(Math.round(value), 0, 100);
     }
 
     public int calculateStructuredFiltersScore(ResumeFilterAssessment filters) {
-        List<Integer> knownWeights = List.of(
+        List<Integer> knownWeights = Stream.of(
                         filters.experience(), filters.education(), filters.location(), filters.relocation(),
                         filters.salary(), filters.languages(), filters.employmentType(), filters.workFormat())
-                .stream()
                 .map(FilterAssessment::status)
                 .filter(status -> status != FilterStatus.UNKNOWN)
                 .map(this::filterStatusWeight)

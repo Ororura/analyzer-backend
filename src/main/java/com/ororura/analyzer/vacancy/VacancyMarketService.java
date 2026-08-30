@@ -29,7 +29,7 @@ public class VacancyMarketService {
                     result.items().stream().map(VacancyDtos.Vacancy::toMarketVacancy).toList(),
                     result.warnings());
         } catch (RuntimeException exception) {
-            return aggregator.baseline("HH.ru временно недоступен");
+            return aggregator.baseline("Локальный рынок вакансий пока пуст или недоступен");
         }
     }
 

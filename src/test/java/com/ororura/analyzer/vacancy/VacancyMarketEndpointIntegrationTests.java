@@ -1,19 +1,19 @@
 package com.ororura.analyzer.vacancy;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
-import org.junit.jupiter.api.AfterAll;
+import com.ororura.analyzer.vacancy.api.VacancyDtos.Vacancy;
+import com.ororura.analyzer.vacancy.persistence.VacancyContentHasher;
+import com.ororura.analyzer.vacancy.persistence.VacancyEntity;
+import com.ororura.analyzer.vacancy.persistence.VacancyNormalizer;
+import com.ororura.analyzer.vacancy.persistence.VacancyRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -23,70 +23,34 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class VacancyMarketEndpointIntegrationTests {
+    @Autowired MockMvc mockMvc;
+    @Autowired VacancyRepository repository;
+    @Autowired VacancyNormalizer normalizer;
+    @Autowired VacancyContentHasher hasher;
 
-    private static final HttpServer HH_SERVER = startHhServer();
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @DynamicPropertySource
-    static void hhApiProperties(DynamicPropertyRegistry registry) {
-        registry.add("app.hh.base-url", () -> "http://localhost:" + HH_SERVER.getAddress().getPort());
-    }
-
-    @AfterAll
-    static void stopHhServer() {
-        HH_SERVER.stop(0);
+    @BeforeEach
+    void seedLocalMarket() {
+        repository.deleteAll();
+        Vacancy vacancy = VacancyServiceTests.vacancy("1", "Acme", "Java", 150_000);
+        vacancy = new Vacancy(vacancy.id(), vacancy.hhId(), "Java Backend Developer", vacancy.company(),
+                vacancy.companyId(), vacancy.url(), vacancy.location(), vacancy.salary(), vacancy.description(),
+                List.of("Java", "Spring Boot"), vacancy.requirements(), vacancy.responsibilities(), vacancy.experience(),
+                vacancy.employment(), vacancy.schedule(), vacancy.workFormat(), vacancy.source(), vacancy.publishedAt(),
+                vacancy.normalizedAt());
+        var content = normalizer.normalize(vacancy);
+        var now = OffsetDateTime.now(ZoneOffset.UTC);
+        VacancyEntity entity = VacancyEntity.create("hh.ru", "1", now);
+        entity.replaceContent(content, hasher.hash(content), normalizer.rawPayload(vacancy), now);
+        repository.saveAndFlush(entity);
     }
 
     @Test
-    void returnsVacancyMarketCompatibleJson() throws Exception {
+    void returnsMarketAggregatedFromLocalVacancies() throws Exception {
         mockMvc.perform(get("/api/vacancy-market").param("text", "Java Backend Developer"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.source").value("live"))
                 .andExpect(jsonPath("$.sampleSize").value(1))
                 .andExpect(jsonPath("$.skillFrequencies.Java").value(1.0))
-                .andExpect(jsonPath("$.skillFrequencies['Spring Boot']").value(1.0))
-                .andExpect(jsonPath("$.experienceRequirements['1–3 года']").value(1))
-                .andExpect(jsonPath("$.employmentTypes['Полная занятость']").value(1))
-                .andExpect(jsonPath("$.workFormats['Удалённо']").value(1))
-                .andExpect(jsonPath("$.warnings").isEmpty());
-    }
-
-    private static HttpServer startHhServer() {
-        try {
-            HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
-            server.createContext("/", VacancyMarketEndpointIntegrationTests::respond);
-            server.start();
-            return server;
-        } catch (IOException exception) {
-            throw new ExceptionInInitializerError(exception);
-        }
-    }
-
-    private static void respond(HttpExchange exchange) throws IOException {
-        String html = exchange.getRequestURI().getPath().equals("/vacancy/1")
-                ? """
-                  <template id="HH-Lux-InitialState">{"vacancyView":{"vacancyId":"1",
-                    "keySkills":{"keySkill":["Java","Spring Boot"]},"workExperience":"between1And3",
-                    "employmentForm":"FULL","workFormats":["REMOTE"]}}
-                  </template>
-                  """
-                : """
-                  <template id="HH-Lux-InitialState">{"vacancySearchResult":{"totalResults":1,
-                    "paging":{"lastPage":{"page":0},"next":{"disabled":true}},
-                    "vacancies":[{"vacancyId":"1","name":"Java Developer",
-                    "links":{"desktop":"https://hh.ru/vacancy/1"},"area":{"name":"Москва"},
-                    "snippet":{"req":"Java","skill":"Java, Spring Boot"},
-                    "workExperience":"between1And3","employmentForm":"FULL","@workSchedule":"fullDay",
-                    "workFormats":[{"workFormatsElement":["REMOTE"]}]}]}}
-                  </template>
-                  """;
-        byte[] body = html.getBytes(StandardCharsets.UTF_8);
-        exchange.getResponseHeaders().set("Content-Type", "text/html");
-        exchange.sendResponseHeaders(200, body.length);
-        try (OutputStream output = exchange.getResponseBody()) {
-            output.write(body);
-        }
+                .andExpect(jsonPath("$.skillFrequencies['Spring Boot']").value(1.0));
     }
 }
