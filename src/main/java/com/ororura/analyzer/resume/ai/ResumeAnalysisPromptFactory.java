@@ -74,6 +74,15 @@ public class ResumeAnalysisPromptFactory {
             confirmed, weakEvidence и missing могут содержать только labels из marketRequirements structured input.
             missing — только отсутствующие в resumeText market requirements с положительной frequency.
             Не добавляй произвольные технологии или навыки.
+            Для skillEvidence верни только короткие фрагменты resumeText. context отражает место evidence,
+            concrete=true только для конкретно выполненной задачи, hasOutcome=true только при явно указанном результате.
+
+            ATS AND CLAIM FACTS
+            Для каждого обязательного ATS field верни OK, PARTIAL или FAILED и только наблюдаемые issues.
+            Не делай выводов о шрифтах, колонках и layout, недоступных в извлечённом тексте.
+            claims содержит только дословно присутствующие сильные утверждения. Семантические ratings ограничены 0..10.
+            Не исправляй claim и не добавляй метрики. Для каждого interview topic максимум три разных вопроса,
+            всего не более пятнадцати тем.
 
             EMPLOYMENT PERIODS
             Извлекай только явно указанные даты. Если месяц или год отсутствует, возвращай null для соответствующего

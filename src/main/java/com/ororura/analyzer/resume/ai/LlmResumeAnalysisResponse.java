@@ -7,6 +7,10 @@ public record LlmResumeAnalysisResponse(
         ExperienceAssessment experienceAssessment,
         ResumeAssessment resumeAssessment,
         Skills skills,
+        List<SkillEvidenceFact> skillEvidence,
+        List<AtsFieldFact> atsFields,
+        List<ClaimFact> claims,
+        List<InterviewTopicFact> interviewTopics,
         List<EmploymentPeriod> employmentPeriods,
         List<String> strengths,
         List<String> weaknesses,
@@ -19,12 +23,24 @@ public record LlmResumeAnalysisResponse(
         require(experienceAssessment, "experienceAssessment");
         require(resumeAssessment, "resumeAssessment");
         require(skills, "skills");
+        skillEvidence = copyNullable(skillEvidence);
+        atsFields = copyNullable(atsFields);
+        claims = copyNullable(claims);
+        interviewTopics = copyNullable(interviewTopics);
         employmentPeriods = copy(employmentPeriods, "employmentPeriods");
         strengths = copy(strengths, "strengths");
         weaknesses = copy(weaknesses, "weaknesses");
         atsIssues = copy(atsIssues, "atsIssues");
         recommendations = copy(recommendations, "recommendations");
         warnings = copy(warnings, "warnings");
+    }
+
+    public LlmResumeAnalysisResponse(List<CriterionAssessment> assessments,
+            ExperienceAssessment experienceAssessment, ResumeAssessment resumeAssessment, Skills skills,
+            List<EmploymentPeriod> employmentPeriods, List<String> strengths, List<String> weaknesses,
+            List<String> atsIssues, List<String> recommendations, List<String> warnings) {
+        this(assessments, experienceAssessment, resumeAssessment, skills, List.of(), List.of(), List.of(), List.of(),
+                employmentPeriods, strengths, weaknesses, atsIssues, recommendations, warnings);
     }
 
     public record ExperienceAssessment(
@@ -59,6 +75,33 @@ public record LlmResumeAnalysisResponse(
         }
     }
 
+    public record SkillEvidenceFact(String skill, List<EvidenceFact> evidence) {
+        public SkillEvidenceFact { evidence = copy(evidence, "skillEvidence.evidence"); }
+    }
+
+    public record EvidenceFact(String text, EvidenceContext context, boolean concrete, boolean hasOutcome) {
+    }
+
+    public enum EvidenceContext { COMMERCIAL_TASK, PROJECT_TASK, STACK_CONTEXT, SKILLS_SECTION }
+
+    public record AtsFieldFact(String field, AtsFieldStatus status, List<String> issues) {
+        public AtsFieldFact { issues = copy(issues, "atsFields.issues"); }
+    }
+
+    public enum AtsFieldStatus { OK, PARTIAL, FAILED }
+
+    public record ClaimFact(String claim, int valueScore, int credibilityScore, int interviewRisk,
+            int evidenceQuality, String explanation) {
+        public ClaimFact {
+            requireRange(valueScore); requireRange(credibilityScore); requireRange(interviewRisk);
+            requireRange(evidenceQuality);
+        }
+    }
+
+    public record InterviewTopicFact(String topic, String sourceClaim, List<String> questions) {
+        public InterviewTopicFact { questions = copy(questions, "interviewTopics.questions"); }
+    }
+
     public record EmploymentPeriod(
             String company,
             String position,
@@ -86,5 +129,13 @@ public record LlmResumeAnalysisResponse(
             throw new IllegalArgumentException(name + " must not contain null");
         }
         return List.copyOf(values);
+    }
+
+    private static <T> List<T> copyNullable(List<T> values) {
+        return values == null ? List.of() : List.copyOf(values);
+    }
+
+    private static void requireRange(int score) {
+        if (score < 0 || score > 10) throw new IllegalArgumentException("Claim score must be in range 0..10");
     }
 }

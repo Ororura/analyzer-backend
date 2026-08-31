@@ -60,6 +60,8 @@ class ScoringPoliciesTests {
 
     @Test
     void appliesLevelBoundariesFromHighestToLowest() {
+        assertThat(levels.detect(72, 90, 9, 88)).isEqualTo(CandidateLevel.SENIOR);
+        assertThat(levels.detect(48, 82, 8, 82)).isEqualTo(CandidateLevel.MIDDLE_PLUS);
         assertThat(levels.detect(36, 75, 7, 75)).isEqualTo(CandidateLevel.MIDDLE);
         assertThat(levels.detect(24, 65, 6, 65)).isEqualTo(CandidateLevel.MIDDLE_MINUS);
         assertThat(levels.detect(12, 55, 0, 55)).isEqualTo(CandidateLevel.JUNIOR_PLUS);

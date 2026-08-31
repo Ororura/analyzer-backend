@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.ororura.analyzer.vacancy.model.Vacancy;
 import com.ororura.analyzer.vacancy.model.VacancySearchResult;
+import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
@@ -31,11 +32,15 @@ class VacancyCacheConfiguration {
         RedisCacheConfiguration search = defaults.entryTtl(properties.searchTtl()).serializeValuesWith(
                 SerializationPair.fromSerializer(
                         new JacksonJsonRedisSerializer<>(objectMapper, VacancySearchResult.class)));
+        RedisCacheConfiguration market = defaults.entryTtl(properties.searchTtl()).serializeValuesWith(
+                SerializationPair.fromSerializer(
+                        new JacksonJsonRedisSerializer<>(objectMapper, VacancyMarketData.class)));
         return RedisCacheManager.builder(connectionFactory).cacheDefaults(defaults)
                 .disableCreateOnMissingCache()
                 .withInitialCacheConfigurations(Map.of(
                         VacancyCacheFacade.DETAILS, details,
-                        VacancyCacheFacade.SEARCH, search))
+                        VacancyCacheFacade.SEARCH, search,
+                        VacancyCacheFacade.MARKET, market))
                 .build();
     }
 

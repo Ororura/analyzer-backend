@@ -125,7 +125,11 @@ class ResumeAnalysisEndpointTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/api/resume/analyze'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/ai/providers'].get").exists())
-                .andExpect(jsonPath("$.components.schemas.ResumeAnalysisResult").exists());
+                .andExpect(jsonPath("$.components.schemas.ResumeAnalysisResult").exists())
+                .andExpect(jsonPath("$.components.schemas.ResumeAnalysisResult.properties.marketFit").exists())
+                .andExpect(jsonPath("$.components.schemas.ResumeAnalysisResult.properties.skillEvidence").exists())
+                .andExpect(jsonPath("$.components.schemas.ResumeAnalysisResult.properties.markdownReport").exists())
+                .andExpect(jsonPath("$.components.schemas.Metadata.properties.analysisSchemaVersion").exists());
     }
 
     private static ResumeAnalysisResult result() {

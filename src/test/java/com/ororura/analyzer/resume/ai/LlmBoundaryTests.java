@@ -189,7 +189,7 @@ class LlmBoundaryTests {
         var schema = new ResumeAnalysisSchemaFactory(objectMapper).create(javaProfile());
         assertThat(schema.path("type").asString()).isEqualTo("object");
         assertThat(schema.path("additionalProperties").asBoolean()).isFalse();
-        assertThat(schema.path("required")).hasSize(10);
+        assertThat(schema.path("required")).hasSize(14);
 
         var semanticScore = schema.path("properties").path("assessments").path("items");
         assertThat(semanticScore.path("additionalProperties").asBoolean()).isFalse();
@@ -225,6 +225,11 @@ class LlmBoundaryTests {
                 "resumeAssessment":{"resumeQuality":{"score":7,"evidence":[]},
                 "atsReadability":{"score":8,"evidence":[]}},
                 "skills":{"confirmed":["Java","PostgreSQL"],"weakEvidence":["Docker"],"missing":["Kubernetes"]},
+                "skillEvidence":[],
+                "atsFields":[{"field":"parsing","status":"OK","issues":[]},
+                {"field":"sections","status":"OK","issues":[]},{"field":"contacts","status":"PARTIAL","issues":["phone missing"]},
+                {"field":"experience","status":"OK","issues":[]},{"field":"education","status":"PARTIAL","issues":["dates missing"]},
+                {"field":"skills","status":"OK","issues":[]}],"claims":[],"interviewTopics":[],
                 "employmentPeriods":[{"company":"Example","position":"Java Developer","startYear":2025,
                 "startMonth":5,"endYear":null,"endMonth":null,"current":true}],
                 "strengths":["Clear experience"],"weaknesses":["No metrics"],"atsIssues":["Missing keywords"],

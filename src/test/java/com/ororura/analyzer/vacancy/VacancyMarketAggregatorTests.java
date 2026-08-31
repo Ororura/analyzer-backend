@@ -29,7 +29,7 @@ class VacancyMarketAggregatorTests {
 
         assertThat(result.source()).isEqualTo("live");
         assertThat(result.sampleSize()).isEqualTo(2);
-        assertThat(result.skillFrequencies().get("Spring Boot")).isEqualTo(1.0);
+        assertThat(result.skillFrequencies()).containsEntry("Spring", 0.5).containsEntry("Spring Boot", 0.5);
         assertThat(result.skillFrequencies().get("REST API")).isEqualTo(0.5);
         assertThat(result.experienceRequirements()).containsEntry("1–3 года", 2);
         assertThat(result.workFormats()).containsEntry("Удалённо", 2);

@@ -133,9 +133,12 @@ class ResumeAnalysisServiceTests {
         assertThat(codexResult.technicalInterviewChance()).isEqualTo(result.technicalInterviewChance());
         assertThat(selectedResult.scores()).isEqualTo(result.scores());
         assertThat(singleResult.scores()).isEqualTo(result.scores());
-        assertThat(singleResult.vacancyFit().requiredSkills()).contains("Java", "Spring Boot");
-        assertThat(singleResult.vacancyFit().experienceRelevanceScore()).isEqualTo(7);
-        assertThat(singleResult.vacancyFit().risks()).containsExactly("weakness");
+        assertThat(singleResult.vacancyFit().score()).isBetween(0, 100);
+        assertThat(singleResult.vacancyFit().applyRecommendation()).isNotNull();
+        assertThat(singleResult.markdownReport()).contains("# Анализ резюме", "## Соответствие вакансии");
+        assertThat(result.vacancyFit()).isNull();
+        assertThat(result.marketFit().score()).isBetween(0, 100);
+        assertThat(result.skillEvidence().skills()).isNotEmpty();
         assertThat(reactResult.targetRole()).isEqualTo("React Frontend Developer");
         assertThat(reactResult.metadata().marketProfileVersion())
                 .isEqualTo(fallback.get(ResumeAnalysisProfile.REACT_FRONTEND).version())

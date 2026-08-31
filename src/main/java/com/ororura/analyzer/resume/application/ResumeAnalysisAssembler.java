@@ -3,7 +3,6 @@ package com.ororura.analyzer.resume.application;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 
 import com.ororura.analyzer.resume.ai.AiProviderType;
 import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
@@ -17,64 +16,59 @@ import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
 import com.ororura.analyzer.resume.market.MarketProfileSource;
 import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Component
 public class ResumeAnalysisAssembler {
 
     private final ResumeAnalysisProperties resumeProperties;
+    private final ResumeAnalysisMarkdownRenderer markdownRenderer;
+
+    @Autowired
+    public ResumeAnalysisAssembler(ResumeAnalysisProperties resumeProperties,
+            ResumeAnalysisMarkdownRenderer markdownRenderer) {
+        this.resumeProperties = resumeProperties;
+        this.markdownRenderer = markdownRenderer;
+    }
 
     public ResumeAnalysisAssembler(ResumeAnalysisProperties resumeProperties) {
-        this.resumeProperties = resumeProperties;
+        this(resumeProperties, new ResumeAnalysisMarkdownRenderer());
     }
 
     public ResumeAnalysisResult assemble(MarketAnalysisProfile profile, LlmResumeAnalysisResponse llm,
             ExperienceSummary experience, TechnologyProfile technologies, VacancyMarketData market,
             int commercialScore, int ats, int overall, int candidateStrength, CandidateLevel level,
             InterviewChance hrChance, InterviewChance technicalChance, Instant generatedAt,
-            AiProviderType provider, String model, MarketProfileSource profileSource) {
+            AiProviderType provider, String model, MarketProfileSource profileSource,
+            DeterministicAnalysisEngine.AnalysisDetails details) {
         LlmResumeAnalysisResponse.ExperienceAssessment experienceAssessment = llm.experienceAssessment();
         ResumeAnalysisResult.Scores scores = new ResumeAnalysisResult.Scores(
                 llm.assessments(), commercialScore,
                 experienceAssessment.experienceDescriptionQuality().score(), ats,
                 llm.resumeAssessment().resumeQuality().score() * 10);
-        return new ResumeAnalysisResult(profile.targetRole(), level, scores, overall, candidateStrength,
+        List<String> legacyWeaknesses = details.risks().stream().map(com.ororura.analyzer.resume.api.ResumeRisk::title)
+                .distinct().toList();
+        List<String> legacyAtsIssues = details.risks().stream()
+                .filter(value -> value.type() == com.ororura.analyzer.resume.api.ResumeRisk.RiskType.ATS)
+                .map(com.ororura.analyzer.resume.api.ResumeRisk::title).distinct().toList();
+        List<String> legacyRecommendations = details.recommendations().items().stream()
+                .map(com.ororura.analyzer.resume.api.ResumeRecommendationAnalysis.Recommendation::title).toList();
+        ResumeAnalysisResult result = new ResumeAnalysisResult(profile.targetRole(), level, scores, overall, candidateStrength,
                 hrChance, technicalChance,
                 new ResumeAnalysisResult.Experience(experience.commercialMonths(), experience.commercialYears(),
                         experience.remainingMonths()),
                 new ResumeAnalysisResult.Skills(technologies.confirmed(), technologies.weakEvidence(),
                         technologies.missing()),
-                llm.strengths(), llm.weaknesses(), llm.atsIssues(), llm.recommendations(),
-                vacancyFit(llm, technologies, market, level),
+                llm.strengths(), legacyWeaknesses, legacyAtsIssues, legacyRecommendations, details.vacancyFit(),
                 new ResumeAnalysisResult.Market(market.source(), market.sampleSize()),
                 new ResumeAnalysisResult.Metadata(profile.profile(), resumeProperties.analysisVersion(),
                         resumeProperties.baselineVersion(),
                         profile.version(), profileSource, generatedAt, provider, model),
+                details.marketFit(), details.marketPosition(), details.technicalProfile(), details.skillEvidence(),
+                details.skillGaps(), details.skillRoi(), details.gradeFit(), details.ats(), details.claimRisks(),
+                details.interviewRisks(), details.risks(), details.recommendations(), null,
                 warnings(market.warnings(), llm.warnings()));
-    }
-
-    private static ResumeAnalysisResult.VacancyFit vacancyFit(LlmResumeAnalysisResponse llm,
-            TechnologyProfile technologies, VacancyMarketData market, CandidateLevel level) {
-        List<String> required = market.skillFrequencies().entrySet().stream()
-                .filter(entry -> entry.getValue() >= 0.5).map(Map.Entry::getKey).toList();
-        List<String> optional = market.skillFrequencies().entrySet().stream()
-                .filter(entry -> entry.getValue() > 0 && entry.getValue() < 0.5).map(Map.Entry::getKey).toList();
-        LinkedHashSet<String> rejectionReasons = new LinkedHashSet<>(llm.weaknesses());
-        rejectionReasons.addAll(llm.atsIssues());
-        return new ResumeAnalysisResult.VacancyFit(required, optional, technologies.missing(),
-                llm.experienceAssessment().commercialRelevance().score(), levelFit(level, market),
-                llm.weaknesses(), List.copyOf(rejectionReasons));
-    }
-
-    private static String levelFit(CandidateLevel level, VacancyMarketData market) {
-        if (market.experienceRequirements().isEmpty()) return "UNKNOWN";
-        String requirements = String.join(" ", market.experienceRequirements().keySet()).toLowerCase();
-        boolean matches = switch (level) {
-            case JUNIOR, JUNIOR_PLUS -> requirements.contains("нет опыта") || requirements.contains("1–3")
-                    || requirements.contains("1-3");
-            case MIDDLE_MINUS, MIDDLE -> requirements.contains("1–3") || requirements.contains("1-3")
-                    || requirements.contains("3–6") || requirements.contains("3-6");
-        };
-        return matches ? "MATCH" : "PARTIAL";
+        return result.withMarkdownReport(markdownRenderer.render(result));
     }
 
     private static List<String> warnings(List<String> market, List<String> llm) {

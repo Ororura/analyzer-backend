@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import com.ororura.analyzer.vacancy.model.Vacancy;
 import com.ororura.analyzer.vacancy.model.VacancySearchResult;
+import com.ororura.analyzer.vacancy.market.VacancyMarketData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class VacancyCacheFacade {
     public static final String DETAILS = "details";
     public static final String SEARCH = "search";
+    public static final String MARKET = "market";
     private static final Logger log = LoggerFactory.getLogger(VacancyCacheFacade.class);
     private final CacheManager cacheManager;
 
@@ -27,6 +29,10 @@ public class VacancyCacheFacade {
 
     public VacancySearchResult search(String key, Supplier<VacancySearchResult> loader) {
         return load(SEARCH, key, VacancySearchResult.class, loader);
+    }
+
+    public VacancyMarketData market(String key, Supplier<VacancyMarketData> loader) {
+        return load(MARKET, key, VacancyMarketData.class, loader);
     }
 
     public void evictDetails(String key) {

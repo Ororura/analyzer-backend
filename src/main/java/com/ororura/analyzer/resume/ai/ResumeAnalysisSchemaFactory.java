@@ -23,6 +23,10 @@ public class ResumeAnalysisSchemaFactory {
                 "responsibilityLevel"));
         properties.set("resumeAssessment", scoredObject("resumeQuality", "atsReadability"));
         properties.set("skills", skills(profile));
+        properties.set("skillEvidence", skillEvidence(profile));
+        properties.set("atsFields", atsFields());
+        properties.set("claims", claims());
+        properties.set("interviewTopics", interviewTopics());
         properties.set("employmentPeriods", employmentPeriods());
         properties.set("strengths", stringArray());
         properties.set("weaknesses", stringArray());
@@ -30,6 +34,45 @@ public class ResumeAnalysisSchemaFactory {
         properties.set("recommendations", stringArray());
         properties.set("warnings", stringArray());
         return closedRequiredObject(properties);
+    }
+
+    private ObjectNode skillEvidence(MarketAnalysisProfile profile) {
+        ObjectNode item = objectMapper.createObjectNode();
+        item.set("skill", requirementEnum(profile, false));
+        ObjectNode evidenceItem = objectMapper.createObjectNode();
+        evidenceItem.set("text", stringType());
+        evidenceItem.set("context", enumType("COMMERCIAL_TASK", "PROJECT_TASK", "STACK_CONTEXT", "SKILLS_SECTION"));
+        evidenceItem.set("concrete", booleanType());
+        evidenceItem.set("hasOutcome", booleanType());
+        item.set("evidence", array(closedRequiredObject(evidenceItem), null, 10));
+        return array(closedRequiredObject(item), null, profile.requirements().size());
+    }
+
+    private ObjectNode atsFields() {
+        ObjectNode item = objectMapper.createObjectNode();
+        item.set("field", enumType("parsing", "sections", "contacts", "experience", "education", "skills"));
+        item.set("status", enumType("OK", "PARTIAL", "FAILED"));
+        item.set("issues", stringArray());
+        return array(closedRequiredObject(item), 6, 6);
+    }
+
+    private ObjectNode claims() {
+        ObjectNode item = objectMapper.createObjectNode();
+        item.set("claim", stringType());
+        item.set("valueScore", boundedInteger(0, 10));
+        item.set("credibilityScore", boundedInteger(0, 10));
+        item.set("interviewRisk", boundedInteger(0, 10));
+        item.set("evidenceQuality", boundedInteger(0, 10));
+        item.set("explanation", stringType());
+        return array(closedRequiredObject(item), null, 20);
+    }
+
+    private ObjectNode interviewTopics() {
+        ObjectNode item = objectMapper.createObjectNode();
+        item.set("topic", stringType());
+        item.set("sourceClaim", stringType());
+        item.set("questions", array(stringType(), null, 3));
+        return array(closedRequiredObject(item), null, 15);
     }
 
     private ObjectNode assessments(MarketAnalysisProfile profile) {
@@ -61,16 +104,21 @@ public class ResumeAnalysisSchemaFactory {
     }
 
     private ObjectNode requirementArray(MarketAnalysisProfile profile, boolean positiveFrequencyOnly) {
+        ObjectNode item = requirementEnum(profile, positiveFrequencyOnly);
+        ObjectNode value = objectMapper.createObjectNode();
+        value.put("type", "array");
+        value.set("items", item);
+        return value;
+    }
+
+    private ObjectNode requirementEnum(MarketAnalysisProfile profile, boolean positiveFrequencyOnly) {
         ObjectNode item = stringType();
         ArrayNode allowed = objectMapper.createArrayNode();
         profile.requirements().stream()
                 .filter(value -> !positiveFrequencyOnly || value.frequency() > 0)
                 .forEach(value -> allowed.add(value.label()));
         item.set("enum", allowed);
-        ObjectNode value = objectMapper.createObjectNode();
-        value.put("type", "array");
-        value.set("items", item);
-        return value;
+        return item;
     }
 
     private ObjectNode scoredObject(String... fields) {
@@ -139,6 +187,26 @@ public class ResumeAnalysisSchemaFactory {
     private ObjectNode integerType() {
         ObjectNode value = objectMapper.createObjectNode();
         value.put("type", "integer");
+        return value;
+    }
+
+    private ObjectNode boundedInteger(int minimum, int maximum) {
+        ObjectNode value = integerType(); value.put("minimum", minimum); value.put("maximum", maximum); return value;
+    }
+
+    private ObjectNode booleanType() {
+        ObjectNode value = objectMapper.createObjectNode(); value.put("type", "boolean"); return value;
+    }
+
+    private ObjectNode enumType(String... values) {
+        ObjectNode value = stringType(); ArrayNode allowed = objectMapper.createArrayNode();
+        java.util.Arrays.stream(values).forEach(allowed::add); value.set("enum", allowed); return value;
+    }
+
+    private ObjectNode array(ObjectNode items, Integer minimum, Integer maximum) {
+        ObjectNode value = objectMapper.createObjectNode(); value.put("type", "array"); value.set("items", items);
+        if (minimum != null) value.put("minItems", minimum);
+        if (maximum != null) value.put("maxItems", maximum);
         return value;
     }
 

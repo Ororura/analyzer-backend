@@ -43,6 +43,18 @@ public class VacancyRequirementPipeline {
         return aggregator.aggregate(profile, pool.fetchedCount(), processed);
     }
 
+    public List<ResolvedVacancyRequirements> resolve(ResumeAnalysisProfile profile, List<Vacancy> vacancies) {
+        if (profile == null || vacancies == null) throw new IllegalArgumentException("Profile and vacancies are required");
+        PreparedPool pool = prepare(vacancies);
+        List<CanonicalVacancyRequirements> processed = new ArrayList<>();
+        for (List<VacancyRequirementInput> batch : batches(pool.inputs(), properties.batchSize())) {
+            processResilient(profile, batch, processed);
+        }
+        return processed.stream().map(vacancy -> new ResolvedVacancyRequirements(vacancy.vacancyId(),
+                vacancy.requirements().stream().map(value -> new ResolvedVacancyRequirements.Requirement(
+                        value.id(), value.label(), value.type(), value.importance())).toList())).toList();
+    }
+
     private void processResilient(ResumeAnalysisProfile profile, List<VacancyRequirementInput> batch,
             List<CanonicalVacancyRequirements> target) {
         try {

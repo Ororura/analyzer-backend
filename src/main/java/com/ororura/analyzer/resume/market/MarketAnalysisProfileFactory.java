@@ -23,6 +23,15 @@ public class MarketAnalysisProfileFactory {
                 sampleSize, generatedAt, version);
     }
 
+    public MarketAnalysisProfile create(ResumeAnalysisProfile profile, String targetRole,
+            List<AnalysisCriterion> criteria, List<MarketRequirement> requirements,
+            List<MarketSkillStatistics> skillStatistics, List<MarketVacancyRequirements> vacancyRequirements,
+            boolean sufficientSample, int sampleSize, Instant generatedAt) {
+        String version = fingerprint(profile, targetRole, criteria, requirements, sampleSize);
+        return new MarketAnalysisProfile(profile, targetRole, criteria, requirements, skillStatistics,
+                vacancyRequirements, sufficientSample, sampleSize, generatedAt, version);
+    }
+
     String fingerprint(ResumeAnalysisProfile profile, String targetRole,
             List<AnalysisCriterion> criteria, List<MarketRequirement> requirements, int sampleSize) {
         MessageDigest digest = sha256();

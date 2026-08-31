@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties({ResumeAnalysisProperties.class, AiProperties.class,
+@EnableConfigurationProperties({ResumeAnalysisProperties.class, ResumeScoringProperties.class, AiProperties.class,
         CodexCliProperties.class, PolzaProperties.class})
 public class ResumeConfiguration {
 

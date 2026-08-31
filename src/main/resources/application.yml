@@ -74,6 +74,31 @@ app:
     analysis-version: ${RESUME_ANALYSIS_VERSION:1}
     baseline-version: ${RESUME_BASELINE_VERSION:2026-08}
     max-text-length: ${RESUME_MAX_TEXT_LENGTH:200000}
+    scoring:
+      must-have-weight: ${RESUME_MARKET_FIT_MUST_HAVE_WEIGHT:0.40}
+      skill-coverage-weight: ${RESUME_MARKET_FIT_SKILL_COVERAGE_WEIGHT:0.25}
+      experience-weight: ${RESUME_MARKET_FIT_EXPERIENCE_WEIGHT:0.20}
+      ats-weight: ${RESUME_MARKET_FIT_ATS_WEIGHT:0.05}
+      grade-weight: ${RESUME_MARKET_FIT_GRADE_WEIGHT:0.10}
+      must-have-required-frequency: ${RESUME_MUST_HAVE_REQUIRED_FREQUENCY:0.40}
+      core-frequency: ${RESUME_SKILL_CORE_FREQUENCY:0.70}
+      high-frequency: ${RESUME_SKILL_HIGH_FREQUENCY:0.40}
+      medium-frequency: ${RESUME_SKILL_MEDIUM_FREQUENCY:0.20}
+      high-gap-threshold: ${RESUME_HIGH_GAP_THRESHOLD:0.35}
+      medium-gap-threshold: ${RESUME_MEDIUM_GAP_THRESHOLD:0.15}
+      ats-parsing-weight: ${RESUME_ATS_PARSING_WEIGHT:0.20}
+      ats-sections-weight: ${RESUME_ATS_SECTIONS_WEIGHT:0.15}
+      ats-contacts-weight: ${RESUME_ATS_CONTACTS_WEIGHT:0.10}
+      ats-experience-weight: ${RESUME_ATS_EXPERIENCE_WEIGHT:0.20}
+      ats-education-weight: ${RESUME_ATS_EDUCATION_WEIGHT:0.10}
+      ats-skills-weight: ${RESUME_ATS_SKILLS_WEIGHT:0.10}
+      ats-keyword-weight: ${RESUME_ATS_KEYWORD_WEIGHT:0.15}
+      high-gap-weight: ${RESUME_HIGH_GAP_WEIGHT:1.0}
+      medium-gap-weight: ${RESUME_MEDIUM_GAP_WEIGHT:0.65}
+      low-gap-weight: ${RESUME_LOW_GAP_WEIGHT:0.35}
+      low-effort-weight: ${RESUME_LOW_EFFORT_WEIGHT:0.75}
+      medium-effort-weight: ${RESUME_MEDIUM_EFFORT_WEIGHT:1.0}
+      high-effort-weight: ${RESUME_HIGH_EFFORT_WEIGHT:1.5}
     market:
       min-requirement-frequency: ${RESUME_MARKET_MIN_REQUIREMENT_FREQUENCY:0.05}
       min-vacancy-count: ${RESUME_MARKET_MIN_VACANCY_COUNT:2}

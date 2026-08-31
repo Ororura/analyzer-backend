@@ -10,8 +10,13 @@ import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
 import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
 import com.ororura.analyzer.resume.market.MarketAnalysisProfileFactory;
 import com.ororura.analyzer.resume.market.MarketRequirement;
+import com.ororura.analyzer.resume.market.MarketSkillStatistics;
+import com.ororura.analyzer.resume.market.MarketVacancyRequirements;
+import com.ororura.analyzer.resume.market.SkillImportance;
+import com.ororura.analyzer.resume.config.ResumeScoringProperties;
 import com.ororura.analyzer.vacancy.requirement.MarketRequirementStatistics;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Component
 public class MarketCriterionGenerator {
@@ -24,11 +29,14 @@ public class MarketCriterionGenerator {
     private final CriterionWeightCalculator weightCalculator;
     private final MarketAnalysisProfileFactory profileFactory;
     private final Clock clock;
+    private final ResumeScoringProperties scoring;
 
+    @Autowired
     MarketCriterionGenerator(ResumeAnalysisProfileRegistry profileRegistry,
             MarketCriterionPromptFactory promptFactory, MarketCriterionAiGateway aiGateway,
             MarketCriterionResponseParser responseParser, MarketCriterionGroupingValidator groupingValidator,
-            CriterionWeightCalculator weightCalculator, MarketAnalysisProfileFactory profileFactory, Clock clock) {
+            CriterionWeightCalculator weightCalculator, MarketAnalysisProfileFactory profileFactory, Clock clock,
+            ResumeScoringProperties scoring) {
         this.profileRegistry = profileRegistry;
         this.promptFactory = promptFactory;
         this.aiGateway = aiGateway;
@@ -37,6 +45,15 @@ public class MarketCriterionGenerator {
         this.weightCalculator = weightCalculator;
         this.profileFactory = profileFactory;
         this.clock = clock;
+        this.scoring = scoring;
+    }
+
+    MarketCriterionGenerator(ResumeAnalysisProfileRegistry profileRegistry,
+            MarketCriterionPromptFactory promptFactory, MarketCriterionAiGateway aiGateway,
+            MarketCriterionResponseParser responseParser, MarketCriterionGroupingValidator groupingValidator,
+            CriterionWeightCalculator weightCalculator, MarketAnalysisProfileFactory profileFactory, Clock clock) {
+        this(profileRegistry, promptFactory, aiGateway, responseParser, groupingValidator, weightCalculator,
+                profileFactory, clock, new ResumeScoringProperties());
     }
 
     public MarketAnalysisProfile generate(MarketRequirementStatistics statistics) {
@@ -55,7 +72,32 @@ public class MarketCriterionGenerator {
         List<MarketRequirement> requirements = statistics.requirements().stream()
                 .map(MarketRequirementStatistics.RequirementStatistics::requirement)
                 .sorted(Comparator.comparing(MarketRequirement::id)).toList();
+        List<MarketSkillStatistics> skillStatistics = statistics.requirements().stream()
+                .map(value -> new MarketSkillStatistics(normalizedSkill(value.id()), value.label(),
+                        (long) value.totalVacancyCount(), (long) statistics.sampleSize(), value.frequency(),
+                        value.requiredFrequency(), value.preferredFrequency(), value.optionalFrequency(),
+                        importance(value.frequency())))
+                .toList();
+        List<MarketVacancyRequirements> vacancyRequirements = statistics.vacancyRequirements().stream()
+                .map(value -> new MarketVacancyRequirements(value.vacancyId(), value.requirements().stream()
+                        .map(item -> new MarketVacancyRequirements.Requirement(
+                                item.requirementId(), item.importance())).toList()))
+                .toList();
         return profileFactory.create(statistics.profile(), definition.targetRole(), criteria, requirements,
+                skillStatistics, vacancyRequirements, statistics.sufficientSample(),
                 statistics.processedCount(), clock.instant());
+    }
+
+    private SkillImportance importance(double frequency) {
+        if (frequency >= scoring.getCoreFrequency()) return SkillImportance.CORE;
+        if (frequency >= scoring.getHighFrequency()) return SkillImportance.HIGH;
+        if (frequency >= scoring.getMediumFrequency()) return SkillImportance.MEDIUM;
+        return SkillImportance.LOW;
+    }
+
+    private static String normalizedSkill(String requirementId) {
+        int separator = requirementId.indexOf(':');
+        String value = separator >= 0 ? requirementId.substring(separator + 1) : requirementId;
+        return value.replace('-', '_');
     }
 }

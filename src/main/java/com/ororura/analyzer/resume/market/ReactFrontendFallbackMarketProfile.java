@@ -32,6 +32,6 @@ public class ReactFrontendFallbackMarketProfile implements FallbackMarketProfile
     }
 
     private static AnalysisCriterion criterion(String id, String label, double weight) {
-        return new AnalysisCriterion(id, label, "Fallback assessment for " + label, weight, 0);
+        return new AnalysisCriterion(id, label, "Assessment for " + label, weight, 0);
     }
 }

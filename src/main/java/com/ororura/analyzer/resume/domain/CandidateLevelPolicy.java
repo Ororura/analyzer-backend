@@ -8,6 +8,12 @@ import com.ororura.analyzer.resume.api.ResumeAnalysisResult.CandidateLevel;
 public class CandidateLevelPolicy {
 
     public CandidateLevel detect(int months, int technical, int responsibility, int overall) {
+        if (months >= 72 && technical >= 90 && responsibility >= 9 && overall >= 88) {
+            return CandidateLevel.SENIOR;
+        }
+        if (months >= 48 && technical >= 82 && responsibility >= 8 && overall >= 82) {
+            return CandidateLevel.MIDDLE_PLUS;
+        }
         if (months >= 36 && technical >= 75 && responsibility >= 7 && overall >= 75) {
             return CandidateLevel.MIDDLE;
         }

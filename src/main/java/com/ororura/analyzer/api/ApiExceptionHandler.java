@@ -25,7 +25,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiErrorResponse> handleUploadTooLarge(MaxUploadSizeExceededException exception) {
-        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE)
                 .body(ApiErrorResponse.of("PDF_TOO_LARGE", "PDF file exceeds the configured size limit"));
     }
 

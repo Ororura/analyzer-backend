@@ -43,12 +43,39 @@ public class LlmResponseValidator {
         }
         validateScores(response, profile);
         validateSkills(response, profile);
+        validateStructuredFacts(response, profile);
         validateStrings(response.strengths());
         validateStrings(response.weaknesses());
         validateStrings(response.atsIssues());
         validateStrings(response.recommendations());
         validateStrings(response.warnings());
         return List.copyOf(periods);
+    }
+
+    private static void validateStructuredFacts(LlmResumeAnalysisResponse response, MarketAnalysisProfile profile) {
+        java.util.Set<String> allowed = profile.requirements().stream().map(MarketRequirement::label)
+                .collect(java.util.stream.Collectors.toSet());
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (var skill : response.skillEvidence()) {
+            validateText(skill.skill());
+            if (!allowed.contains(skill.skill()) || !seen.add(skill.skill().toLowerCase(java.util.Locale.ROOT))) throw invalid();
+            for (var evidence : skill.evidence()) validateText(evidence.text());
+        }
+        java.util.Set<String> fields = new java.util.HashSet<>();
+        for (var field : response.atsFields()) {
+            validateText(field.field()); validateStrings(field.issues());
+            if (!fields.add(field.field().toLowerCase(java.util.Locale.ROOT))) throw invalid();
+        }
+        for (var claim : response.claims()) {
+            validateText(claim.claim()); validateText(claim.explanation());
+        }
+        int questions = 0;
+        for (var topic : response.interviewTopics()) {
+            validateText(topic.topic()); validateText(topic.sourceClaim()); validateStrings(topic.questions());
+            if (topic.questions().size() > 3) throw invalid();
+            questions += topic.questions().size();
+        }
+        if (questions > 15 || response.interviewTopics().size() > 15) throw invalid();
     }
 
     private static EmploymentPeriod conservativePeriod(

@@ -13,6 +13,9 @@ public record MarketAnalysisProfile(
         String targetRole,
         List<AnalysisCriterion> criteria,
         List<MarketRequirement> requirements,
+        List<MarketSkillStatistics> skillStatistics,
+        List<MarketVacancyRequirements> vacancyRequirements,
+        boolean sufficientSample,
         int sampleSize,
         Instant generatedAt,
         String version) {
@@ -41,7 +44,16 @@ public record MarketAnalysisProfile(
         }
         criteria = List.copyOf(criteria);
         requirements = List.copyOf(requirements);
+        skillStatistics = skillStatistics == null ? List.of() : List.copyOf(skillStatistics);
+        vacancyRequirements = vacancyRequirements == null ? List.of() : List.copyOf(vacancyRequirements);
         ensureUniqueCriterionIds(criteria);
+    }
+
+    public MarketAnalysisProfile(ResumeAnalysisProfile profile, String targetRole,
+            List<AnalysisCriterion> criteria, List<MarketRequirement> requirements,
+            int sampleSize, Instant generatedAt, String version) {
+        this(profile, targetRole, criteria, requirements, List.of(), List.of(), false,
+                sampleSize, generatedAt, version);
     }
 
     private static void ensureUniqueCriterionIds(List<AnalysisCriterion> criteria) {

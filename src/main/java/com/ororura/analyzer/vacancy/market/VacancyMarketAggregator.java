@@ -15,17 +15,30 @@ import com.ororura.analyzer.resume.ai.AnalysisTechnologyCatalog;
 import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
 import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
 import com.ororura.analyzer.resume.domain.LegacyTechnologyTaxonomy;
+import com.ororura.analyzer.resume.domain.SkillNormalizer;
+import com.ororura.analyzer.resume.config.ResumeScoringProperties;
+import com.ororura.analyzer.resume.market.MarketSkillStatistics;
+import com.ororura.analyzer.resume.market.SkillImportance;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Component
 public class VacancyMarketAggregator {
 
-    private final LegacyTechnologyTaxonomy taxonomy;
     private final AnalysisTechnologyCatalog technologyCatalog;
+    private final ResumeScoringProperties scoring;
+    private final SkillNormalizer skillNormalizer;
 
     public VacancyMarketAggregator(LegacyTechnologyTaxonomy taxonomy, AnalysisTechnologyCatalog technologyCatalog) {
-        this.taxonomy = taxonomy;
+        this(taxonomy, technologyCatalog, new ResumeScoringProperties());
+    }
+
+    @Autowired
+    public VacancyMarketAggregator(LegacyTechnologyTaxonomy taxonomy, AnalysisTechnologyCatalog technologyCatalog,
+            ResumeScoringProperties scoring) {
         this.technologyCatalog = technologyCatalog;
+        this.scoring = scoring;
+        this.skillNormalizer = new SkillNormalizer(technologyCatalog);
     }
 
     public VacancyMarketData aggregate(ResumeAnalysisProfile profile,
@@ -39,8 +52,8 @@ public class VacancyMarketAggregator {
             return empty(warnings.isEmpty() ? "HH.ru не вернул актуальные вакансии" : warnings.getFirst());
         }
 
-        var definitions = technologyCatalog.technologies(profile);
-        Set<String> technologies = definitions.stream().map(value -> value.name()).collect(java.util.stream.Collectors.toSet());
+        Set<String> technologies = skillNormalizer.definitions(profile).stream()
+                .map(value -> value.displayName()).collect(java.util.stream.Collectors.toSet());
 
         Map<String, Integer> skillCounts = new LinkedHashMap<>();
         Map<String, Integer> experienceRequirements = new LinkedHashMap<>();
@@ -51,7 +64,7 @@ public class VacancyMarketAggregator {
         for (MarketVacancy vacancy : vacancies) {
             Set<String> vacancySkills = new LinkedHashSet<>();
             for (String skill : vacancy.skills()) {
-                String canonical = taxonomy.canonical(definitions, skill);
+                String canonical = skillNormalizer.displayName(profile, skill);
                 if (technologies.contains(canonical)) {
                     vacancySkills.add(canonical);
                 }
@@ -72,9 +85,14 @@ public class VacancyMarketAggregator {
                 .limit(20).map(Map.Entry::getKey).toList();
         List<VacancyMarketData.VacancyContext> contexts = vacancies.size() == 1
                 ? List.of(toContext(vacancies.getFirst())) : List.of();
+        List<MarketSkillStatistics> statistics = skillCounts.entrySet().stream()
+                .map(entry -> new MarketSkillStatistics(normalized(entry.getKey()), entry.getKey(),
+                        entry.getValue().longValue(), (long) vacancies.size(), frequencies.get(entry.getKey()),
+                        0, 0, 0, importance(frequencies.get(entry.getKey()))))
+                .toList();
         return new VacancyMarketData(source, vacancies.size(), frequencies, experienceRequirements,
                 employmentTypes, workFormats, salaryStatistics(vacancies), commonRequirements, contexts,
-                List.copyOf(warnings));
+                statistics, null, vacancies.size() >= 1, List.copyOf(warnings));
     }
 
     public VacancyMarketData fallback(MarketAnalysisProfile profile, String warning) {
@@ -141,6 +159,18 @@ public class VacancyMarketAggregator {
 
     private static double roundShare(int count, int total) {
         return BigDecimal.valueOf((double) count / total).setScale(2, RoundingMode.HALF_UP).doubleValue();
+    }
+
+    private SkillImportance importance(double frequency) {
+        if (frequency >= scoring.getCoreFrequency()) return SkillImportance.CORE;
+        if (frequency >= scoring.getHighFrequency()) return SkillImportance.HIGH;
+        if (frequency >= scoring.getMediumFrequency()) return SkillImportance.MEDIUM;
+        return SkillImportance.LOW;
+    }
+
+    private static String normalized(String value) {
+        return value.toLowerCase(java.util.Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", "_")
+                .replaceAll("^_+|_+$", "");
     }
 
 }
