@@ -26,7 +26,8 @@ Run Configuration, or a local `.env` file; do not commit them.
 The optional `CODEX_CLI` provider requires OpenAI Codex CLI to be installed and authenticated for the operating-system
 account running the Spring process. The configured executable must be available to that process. Enable it with
 `CODEX_ENABLED=true`; optionally set `CODEX_EXECUTABLE`, `CODEX_MODEL`, `CODEX_TIMEOUT`, and
-`CODEX_MAX_CONCURRENT_PROCESSES`.
+`CODEX_MAX_CONCURRENT_PROCESSES`. The default analysis timeout is five minutes; set `CODEX_TIMEOUT` to a Spring
+duration such as `10m` when larger resumes or slower models need more time.
 
 Codex authentication is server-side only. API keys, login sessions, `CODEX_HOME`, executable paths, and CLI flags are
 never accepted from the frontend. Resume analysis uses `codex exec` non-interactively with a read-only sandbox,

@@ -114,6 +114,6 @@ app:
       enabled: ${CODEX_ENABLED:true}
       executable: ${CODEX_EXECUTABLE:codex}
       model: ${CODEX_MODEL:}
-      timeout: ${CODEX_TIMEOUT:120s}
+      timeout: ${CODEX_TIMEOUT:300s}
       availability-timeout: ${CODEX_AVAILABILITY_TIMEOUT:5s}
       max-concurrent-processes: ${CODEX_MAX_CONCURRENT_PROCESSES:2}

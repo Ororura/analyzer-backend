@@ -125,6 +125,7 @@ class LlmBoundaryTests {
                         "marketContext как доказательство опыта",
                         "Не превращай перечисление технологии в Skills",
                         "целыми числами от 0 до 10",
+                        "суммарно по всем темам не более пятнадцати вопросов",
                         "Если месяц или год отсутствует, возвращай null",
                         "Не вычисляй текущую дату", "detected level", "filesystem", "network");
         assertThat(request.input().path("resumeText").asString())
