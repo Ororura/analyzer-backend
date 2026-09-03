@@ -1,16 +1,16 @@
-package com.ororura.analyzer.vacancy.requirement.generation;
+package com.ororura.analyzer.market.profile;
 
 import java.util.List;
 import java.util.Map;
 
-import com.ororura.analyzer.polza.PolzaClient;
-import com.ororura.analyzer.polza.PolzaDtos.CompletionRequest;
-import com.ororura.analyzer.resume.ai.CriterionAssessment;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisSchemaFactory;
+import com.ororura.analyzer.integration.polza.PolzaClient;
+import com.ororura.analyzer.integration.polza.PolzaDtos.CompletionRequest;
+import com.ororura.analyzer.analysis.semantic.CriterionAssessment;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.resume.infrastructure.ai.ResumeAnalysisSchemaFactory;
 import com.ororura.analyzer.resume.domain.OverallScoreCalculator;
-import com.ororura.analyzer.vacancy.model.Vacancy;
-import com.ororura.analyzer.vacancy.requirement.VacancyRequirementPipeline;
+import com.ororura.analyzer.vacancy.domain.Vacancy;
+import com.ororura.analyzer.market.requirement.VacancyRequirementPipeline;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -103,5 +103,5 @@ class GenericMarketPipelineIntegrationTests {
         }).toList();
     }
 
-    private record MarketAnalysisProfileResult(com.ororura.analyzer.resume.market.MarketAnalysisProfile profile) {}
+    private record MarketAnalysisProfileResult(com.ororura.analyzer.market.domain.MarketAnalysisProfile profile) {}
 }

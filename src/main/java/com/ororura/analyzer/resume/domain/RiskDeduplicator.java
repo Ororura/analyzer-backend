@@ -3,10 +3,8 @@ package com.ororura.analyzer.resume.domain;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import com.ororura.analyzer.resume.api.ResumeRisk;
-import org.springframework.stereotype.Component;
+import com.ororura.analyzer.resume.domain.analysis.ResumeRisk;
 
-@Component
 public class RiskDeduplicator {
     public List<ResumeRisk> deduplicate(List<ResumeRisk> risks) {
         LinkedHashMap<String, ResumeRisk> result = new LinkedHashMap<>();

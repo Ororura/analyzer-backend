@@ -1,9 +1,15 @@
 package com.ororura.analyzer.resume.api;
 
+import java.io.IOException;
+
 import com.ororura.analyzer.api.ApiErrorResponse;
 import com.ororura.analyzer.resume.application.ResumeAnalysisService;
-import com.ororura.analyzer.resume.ai.AiProviderType;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
+import com.ororura.analyzer.resume.application.port.AiProviderType;
+import com.ororura.analyzer.resume.application.port.ResumeDocument;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.resume.error.ResumeAnalysisException;
+import com.ororura.analyzer.resume.error.ResumeErrorCode;
+import com.ororura.analyzer.market.application.VacancyMarketRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -22,9 +28,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class ResumeAnalysisController {
 
     private final ResumeAnalysisService service;
+    private final ResumeAnalysisApiMapper mapper;
 
-    public ResumeAnalysisController(ResumeAnalysisService service) {
+    public ResumeAnalysisController(ResumeAnalysisService service, ResumeAnalysisApiMapper mapper) {
         this.service = service;
+        this.mapper = mapper;
     }
 
     @Operation(summary = "Analyze a PDF resume against ATS criteria")
@@ -52,7 +60,25 @@ public class ResumeAnalysisController {
             @RequestParam(name = "provider", required = false) AiProviderType provider,
             @RequestParam(name = "profile", required = false) ResumeAnalysisProfile profile,
             @RequestPart(name = "analysis", required = false) VacancyAnalysisRequest analysis) {
-        return service.analyze(file, provider, profile,
-                analysis == null ? VacancyAnalysisRequest.autoMarket() : analysis);
+        return mapper.toResponse(service.analyze(toDocument(file), provider, profile, toMarketRequest(analysis)));
+    }
+
+    private static ResumeDocument toDocument(MultipartFile file) {
+        if (file == null) {
+            return null;
+        }
+        try {
+            return new ResumeDocument(file.getOriginalFilename(), file.getContentType(), file.getSize(), file.getBytes());
+        } catch (IOException exception) {
+            throw new ResumeAnalysisException(ResumeErrorCode.INVALID_FILE, "Unable to read the uploaded file", exception);
+        }
+    }
+
+    private static VacancyMarketRequest toMarketRequest(VacancyAnalysisRequest request) {
+        if (request == null || request.mode() == null) {
+            return VacancyMarketRequest.autoMarket();
+        }
+        return new VacancyMarketRequest(VacancyMarketRequest.Mode.valueOf(request.mode().name()),
+                request.vacancyId(), request.selection());
     }
 }

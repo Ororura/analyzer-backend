@@ -1,20 +1,20 @@
-package com.ororura.analyzer.vacancy.requirement.generation;
+package com.ororura.analyzer.market.profile;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 
-import com.ororura.analyzer.resume.ai.AnalysisCriterion;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
-import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
-import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
-import com.ororura.analyzer.resume.market.InMemoryMarketAnalysisProfileStore;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfileFactory;
-import com.ororura.analyzer.resume.market.MarketRequirement;
-import com.ororura.analyzer.resume.market.RequirementType;
+import com.ororura.analyzer.analysis.profile.AnalysisCriterion;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfileRegistry;
+import com.ororura.analyzer.analysis.profile.definition.JavaBackendAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.definition.ReactFrontendAnalysisProfile;
+import com.ororura.analyzer.market.infrastructure.store.InMemoryMarketAnalysisProfileStore;
+import com.ororura.analyzer.market.domain.MarketAnalysisProfile;
+import com.ororura.analyzer.market.domain.MarketAnalysisProfileFactory;
+import com.ororura.analyzer.market.domain.MarketRequirement;
+import com.ororura.analyzer.market.domain.RequirementType;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 
@@ -80,7 +80,7 @@ class MarketCriterionGeneratorTests {
     private MarketCriterionGenerator generator(Instant instant) {
         ObjectMapper objectMapper = new ObjectMapper();
         ResumeAnalysisProfileRegistry registry = new ResumeAnalysisProfileRegistry(List.of(
-                new JavaBackendAnalysisProfile(), new ReactFrontendAnalysisProfile()));
+                new JavaBackendAnalysisProfile("Java Backend Developer"), new ReactFrontendAnalysisProfile()));
         MarketCriterionSchemaFactory schemaFactory = new MarketCriterionSchemaFactory(objectMapper, properties);
         return new MarketCriterionGenerator(registry,
                 new MarketCriterionPromptFactory(objectMapper, schemaFactory), gateway,

@@ -1,12 +1,12 @@
-package com.ororura.analyzer.vacancy.requirement;
+package com.ororura.analyzer.market.requirement;
 
 import java.util.List;
 
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
-import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
-import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
-import com.ororura.analyzer.resume.market.RequirementType;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfileRegistry;
+import com.ororura.analyzer.analysis.profile.definition.JavaBackendAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.definition.ReactFrontendAnalysisProfile;
+import com.ororura.analyzer.market.domain.RequirementType;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RequirementCanonicalizerTests {
 
     private final RequirementCanonicalizer canonicalizer = new RequirementCanonicalizer(
-            new com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog());
+            new com.ororura.analyzer.analysis.profile.DefaultAnalysisTechnologyCatalog());
 
     @Test
     void canonicalizesAliasesAndCaseDeterministically() {

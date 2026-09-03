@@ -1,5 +1,9 @@
 package com.ororura.analyzer.resume.ai;
 
+import com.ororura.analyzer.resume.application.AiProviderRegistry;
+import com.ororura.analyzer.resume.application.port.AiProvider;
+import com.ororura.analyzer.resume.application.port.AiProviderType;
+
 import java.util.List;
 
 import com.ororura.analyzer.resume.config.AiProperties;

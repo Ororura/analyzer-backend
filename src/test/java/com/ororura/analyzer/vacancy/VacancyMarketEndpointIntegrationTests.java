@@ -4,11 +4,11 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.model.Vacancy;
-import com.ororura.analyzer.vacancy.persistence.VacancyContentHasher;
-import com.ororura.analyzer.vacancy.persistence.VacancyEntity;
-import com.ororura.analyzer.vacancy.persistence.VacancyNormalizer;
-import com.ororura.analyzer.vacancy.persistence.VacancyRepository;
+import com.ororura.analyzer.vacancy.domain.Vacancy;
+import com.ororura.analyzer.vacancy.infrastructure.persistence.VacancyContentHasher;
+import com.ororura.analyzer.vacancy.infrastructure.persistence.VacancyEntity;
+import com.ororura.analyzer.vacancy.infrastructure.persistence.VacancyNormalizer;
+import com.ororura.analyzer.vacancy.infrastructure.persistence.VacancyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

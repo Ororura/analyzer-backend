@@ -1,14 +1,14 @@
-package com.ororura.analyzer.vacancy.requirement.generation;
+package com.ororura.analyzer.market.profile;
 
 import java.util.List;
 
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.market.RequirementType;
-import com.ororura.analyzer.vacancy.requirement.MarketRequirementStatistics;
-import com.ororura.analyzer.vacancy.requirement.MarketRequirementStatistics.MappedRequirement;
-import com.ororura.analyzer.vacancy.requirement.MarketRequirementStatistics.RequirementStatistics;
-import com.ororura.analyzer.vacancy.requirement.MarketRequirementStatistics.VacancyRequirements;
-import com.ororura.analyzer.vacancy.requirement.RequirementImportance;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.market.domain.RequirementType;
+import com.ororura.analyzer.market.requirement.MarketRequirementStatistics;
+import com.ororura.analyzer.market.requirement.MarketRequirementStatistics.MappedRequirement;
+import com.ororura.analyzer.market.requirement.MarketRequirementStatistics.RequirementStatistics;
+import com.ororura.analyzer.market.requirement.MarketRequirementStatistics.VacancyRequirements;
+import com.ororura.analyzer.market.requirement.RequirementImportance;
 
 final class MarketCriterionFixture {
 

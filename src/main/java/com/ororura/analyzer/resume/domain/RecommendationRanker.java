@@ -4,14 +4,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import com.ororura.analyzer.resume.api.AtsAnalysis;
-import com.ororura.analyzer.resume.api.ResumeClaimRiskAnalysis;
-import com.ororura.analyzer.resume.api.ResumeRecommendationAnalysis;
-import com.ororura.analyzer.resume.api.SkillGapAnalysis;
-import com.ororura.analyzer.resume.api.SkillRoiAnalysis;
-import org.springframework.stereotype.Component;
+import com.ororura.analyzer.resume.domain.analysis.AtsAnalysis;
+import com.ororura.analyzer.resume.domain.analysis.ResumeClaimRiskAnalysis;
+import com.ororura.analyzer.resume.domain.analysis.ResumeRecommendationAnalysis;
+import com.ororura.analyzer.resume.domain.analysis.SkillGapAnalysis;
+import com.ororura.analyzer.resume.domain.analysis.SkillRoiAnalysis;
 
-@Component
 public class RecommendationRanker {
     public ResumeRecommendationAnalysis build(AtsAnalysis ats, SkillGapAnalysis gaps,
             ResumeClaimRiskAnalysis claims, List<String> legacy) {

@@ -1,12 +1,10 @@
 package com.ororura.analyzer.resume.domain;
 
 import java.util.Comparator;
-import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
-import com.ororura.analyzer.resume.api.InterviewRiskAnalysis;
-import com.ororura.analyzer.resume.api.ResumeClaimRiskAnalysis;
-import org.springframework.stereotype.Component;
+import com.ororura.analyzer.analysis.semantic.LlmResumeAnalysisResponse;
+import com.ororura.analyzer.resume.domain.analysis.InterviewRiskAnalysis;
+import com.ororura.analyzer.resume.domain.analysis.ResumeClaimRiskAnalysis;
 
-@Component
 public class ClaimRiskAnalyzer {
     public ResumeClaimRiskAnalysis claims(LlmResumeAnalysisResponse llm) {
         return new ResumeClaimRiskAnalysis(llm.claims().stream().map(value ->

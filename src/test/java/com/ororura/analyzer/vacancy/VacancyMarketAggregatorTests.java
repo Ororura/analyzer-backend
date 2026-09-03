@@ -2,15 +2,15 @@ package com.ororura.analyzer.vacancy;
 
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.market.MarketVacancy;
-import com.ororura.analyzer.vacancy.market.VacancyMarketAggregator;
-import com.ororura.analyzer.vacancy.market.VacancyMarketData;
-import com.ororura.analyzer.vacancy.model.Salary;
-import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
-import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
-import com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.domain.LegacyTechnologyTaxonomy;
+import com.ororura.analyzer.market.domain.MarketVacancy;
+import com.ororura.analyzer.market.domain.VacancyMarketAggregator;
+import com.ororura.analyzer.market.domain.VacancyMarketData;
+import com.ororura.analyzer.vacancy.domain.Salary;
+import com.ororura.analyzer.analysis.profile.definition.JavaBackendAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.definition.ReactFrontendAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.DefaultAnalysisTechnologyCatalog;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.analysis.scoring.AnalysisScoringPolicy;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VacancyMarketAggregatorTests {
 
     private final VacancyMarketAggregator aggregator = new VacancyMarketAggregator(
-            new LegacyTechnologyTaxonomy(), new DefaultAnalysisTechnologyCatalog());
+            new DefaultAnalysisTechnologyCatalog(), AnalysisScoringPolicy.defaults());
     private final ResumeAnalysisProfile profile = ResumeAnalysisProfile.JAVA_BACKEND;
 
     @Test

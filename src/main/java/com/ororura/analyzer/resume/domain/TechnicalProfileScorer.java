@@ -1,13 +1,11 @@
 package com.ororura.analyzer.resume.domain;
 
 import java.util.List;
-import com.ororura.analyzer.resume.ai.AnalysisCriterion;
-import com.ororura.analyzer.resume.ai.CriterionAssessment;
-import com.ororura.analyzer.resume.api.ScoreBreakdown;
-import com.ororura.analyzer.resume.api.TechnicalProfile;
-import org.springframework.stereotype.Component;
+import com.ororura.analyzer.analysis.profile.AnalysisCriterion;
+import com.ororura.analyzer.analysis.semantic.CriterionAssessment;
+import com.ororura.analyzer.resume.domain.analysis.ScoreBreakdown;
+import com.ororura.analyzer.resume.domain.analysis.TechnicalProfile;
 
-@Component
 public class TechnicalProfileScorer {
     private final OverallScoreCalculator calculator;
     public TechnicalProfileScorer(OverallScoreCalculator calculator) { this.calculator = calculator; }

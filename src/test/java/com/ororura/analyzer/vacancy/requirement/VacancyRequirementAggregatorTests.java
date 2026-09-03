@@ -1,9 +1,9 @@
-package com.ororura.analyzer.vacancy.requirement;
+package com.ororura.analyzer.market.requirement;
 
 import java.util.List;
 
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.market.RequirementType;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.market.domain.RequirementType;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

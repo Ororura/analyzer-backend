@@ -4,9 +4,12 @@ import java.time.Instant;
 import java.util.List;
 
 import com.ororura.analyzer.resume.application.ResumeAnalysisService;
-import com.ororura.analyzer.resume.ai.CriterionAssessment;
-import com.ororura.analyzer.resume.ai.AiProviderType;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
+import com.ororura.analyzer.resume.application.ResumeAnalysisOutcome;
+import com.ororura.analyzer.market.application.VacancyMarketRequest;
+import org.junit.jupiter.api.BeforeEach;
+import com.ororura.analyzer.analysis.semantic.CriterionAssessment;
+import com.ororura.analyzer.resume.application.port.AiProviderType;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
 import org.junit.jupiter.api.Test;
@@ -21,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -37,10 +41,20 @@ class ResumeAnalysisEndpointTests {
     @MockitoBean
     private ResumeAnalysisService service;
 
+    @MockitoBean
+    private ResumeAnalysisApiMapper mapper;
+
+    private final ResumeAnalysisOutcome outcome = mock(ResumeAnalysisOutcome.class);
+
+    @BeforeEach
+    void mapApplicationOutcome() {
+        when(mapper.toResponse(outcome)).thenReturn(result());
+    }
+
     @Test
     void exposesSuccessfulMultipartAnalysis() throws Exception {
         when(service.analyze(any(), nullable(AiProviderType.class), nullable(ResumeAnalysisProfile.class),
-                any(VacancyAnalysisRequest.class))).thenReturn(result());
+                any(VacancyMarketRequest.class))).thenReturn(outcome);
         MockMultipartFile file = new MockMultipartFile("file", "resume.pdf", "application/pdf", "%PDF-test".getBytes());
 
         mockMvc.perform(multipart("/api/resume/analyze").file(file).param("provider", "CODEX_CLI"))
@@ -51,7 +65,7 @@ class ResumeAnalysisEndpointTests {
                 .andExpect(jsonPath("$.metadata.generatedAt").value("2026-08-28T07:00:00Z"))
                 .andExpect(jsonPath("$.metadata.provider").value("POLZA"));
         verify(service).analyze(any(), eq(AiProviderType.CODEX_CLI), eq(null),
-                org.mockito.ArgumentMatchers.argThat(request -> request.mode() == VacancyAnalysisMode.AUTO_MARKET));
+                org.mockito.ArgumentMatchers.argThat(request -> request.mode() == VacancyMarketRequest.Mode.AUTO_MARKET));
     }
 
     @Test
@@ -65,8 +79,8 @@ class ResumeAnalysisEndpointTests {
     @Test
     void acceptsExplicitSelectedVacanciesAnalysis() throws Exception {
         when(service.analyze(any(), nullable(AiProviderType.class), nullable(ResumeAnalysisProfile.class),
-                any(VacancyAnalysisRequest.class)))
-                .thenReturn(result());
+                any(VacancyMarketRequest.class)))
+                .thenReturn(outcome);
         MockMultipartFile file = new MockMultipartFile("file", "resume.pdf", "application/pdf", "%PDF-test".getBytes());
         MockMultipartFile analysis = new MockMultipartFile("analysis", "", "application/json", """
                 {"mode":"SELECTED_VACANCIES","selection":{"mode":"SELECTED","vacancyIds":["hh-1","hh-2"]}}
@@ -77,21 +91,21 @@ class ResumeAnalysisEndpointTests {
                 .andExpect(jsonPath("$.overallScore").value(76));
 
         verify(service).analyze(any(), eq(null), eq(null), org.mockito.ArgumentMatchers.argThat(request ->
-                request.mode() == VacancyAnalysisMode.SELECTED_VACANCIES
+                request.mode() == VacancyMarketRequest.Mode.SELECTED_VACANCIES
                         && request.selection().vacancyIds().equals(List.of("hh-1", "hh-2"))));
     }
 
     @Test
     void passesExplicitAnalysisProfileToService() throws Exception {
         when(service.analyze(any(), nullable(AiProviderType.class), eq(ResumeAnalysisProfile.REACT_FRONTEND),
-                any(VacancyAnalysisRequest.class))).thenReturn(result());
+                any(VacancyMarketRequest.class))).thenReturn(outcome);
         MockMultipartFile file = new MockMultipartFile("file", "resume.pdf", "application/pdf", "%PDF-test".getBytes());
 
         mockMvc.perform(multipart("/api/resume/analyze").file(file).param("profile", "REACT_FRONTEND"))
                 .andExpect(status().isOk());
 
         verify(service).analyze(any(), eq(null), eq(ResumeAnalysisProfile.REACT_FRONTEND),
-                org.mockito.ArgumentMatchers.argThat(request -> request.mode() == VacancyAnalysisMode.AUTO_MARKET));
+                org.mockito.ArgumentMatchers.argThat(request -> request.mode() == VacancyMarketRequest.Mode.AUTO_MARKET));
     }
 
     @Test
@@ -111,7 +125,7 @@ class ResumeAnalysisEndpointTests {
                 .andExpect(jsonPath("$.error.code").value("INVALID_FILE"));
 
         when(service.analyze(any(), nullable(AiProviderType.class), nullable(ResumeAnalysisProfile.class),
-                any(VacancyAnalysisRequest.class))).thenThrow(new ResumeAnalysisException(
+                any(VacancyMarketRequest.class))).thenThrow(new ResumeAnalysisException(
                 ResumeErrorCode.AI_PROVIDER_UNAVAILABLE, "AI provider is unavailable"));
         MockMultipartFile file = new MockMultipartFile("file", "resume.pdf", "application/pdf", "%PDF-test".getBytes());
         mockMvc.perform(multipart("/api/resume/analyze").file(file))

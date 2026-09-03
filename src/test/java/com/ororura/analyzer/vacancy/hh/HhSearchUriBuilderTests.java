@@ -1,10 +1,10 @@
-package com.ororura.analyzer.vacancy.hh;
+package com.ororura.analyzer.vacancy.infrastructure.hh;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.search.VacancySearchQuery;
+import com.ororura.analyzer.vacancy.application.search.VacancySearchQuery;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

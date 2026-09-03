@@ -1,18 +1,18 @@
 package com.ororura.analyzer.resume.domain;
 
+import com.ororura.analyzer.analysis.profile.SkillNormalizer;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.api.SkillEvidenceAnalysis;
-import com.ororura.analyzer.resume.api.SkillEvidenceAnalysis.EvidenceStatus;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
-import org.springframework.stereotype.Component;
+import com.ororura.analyzer.analysis.semantic.LlmResumeAnalysisResponse;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.resume.domain.analysis.SkillEvidenceAnalysis;
+import com.ororura.analyzer.resume.domain.analysis.SkillEvidenceAnalysis.EvidenceStatus;
+import com.ororura.analyzer.market.domain.MarketAnalysisProfile;
 
-@Component
 public class EvidenceClassifier {
     private final SkillNormalizer normalizer;
 

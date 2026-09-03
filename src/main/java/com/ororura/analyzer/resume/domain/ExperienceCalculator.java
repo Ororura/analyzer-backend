@@ -5,11 +5,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import org.springframework.stereotype.Component;
 
 import static com.ororura.analyzer.resume.domain.ExperienceModels.*;
 
-@Component
 public class ExperienceCalculator {
 
     public ExperienceSummary calculate(List<EmploymentPeriod> periods) {

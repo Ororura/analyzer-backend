@@ -1,4 +1,4 @@
-package com.ororura.analyzer.vacancy.persistence;
+package com.ororura.analyzer.vacancy.infrastructure.persistence;
 
 import java.util.List;
 

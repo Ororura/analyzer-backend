@@ -1,10 +1,10 @@
 package com.ororura.analyzer.vacancy.api;
 
 import com.ororura.analyzer.vacancy.api.VacancyController;
-import com.ororura.analyzer.vacancy.provider.VacancySourceException;
-import com.ororura.analyzer.vacancy.search.InvalidVacancyQueryException;
-import com.ororura.analyzer.vacancy.search.VacancyNotFoundException;
-import com.ororura.analyzer.vacancy.selection.VacancySelectionException;
+import com.ororura.analyzer.vacancy.application.port.VacancySourceException;
+import com.ororura.analyzer.vacancy.application.search.InvalidVacancyQueryException;
+import com.ororura.analyzer.vacancy.application.search.VacancyNotFoundException;
+import com.ororura.analyzer.vacancy.application.selection.VacancySelectionException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@RestControllerAdvice(assignableTypes = {VacancyController.class, com.ororura.analyzer.vacancy.api.VacancyMarketController.class})
+@RestControllerAdvice(assignableTypes = {VacancyController.class, com.ororura.analyzer.market.api.VacancyMarketController.class})
 public class VacancyExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)

@@ -1,5 +1,15 @@
 package com.ororura.analyzer.resume.domain;
 
+import com.ororura.analyzer.analysis.scoring.AnalysisScoringPolicy;
+import com.ororura.analyzer.analysis.profile.SkillNormalizer;
+
+import com.ororura.analyzer.analysis.semantic.LlmResumeAnalysisResponse;
+import com.ororura.analyzer.resume.domain.analysis.*;
+import com.ororura.analyzer.analysis.profile.DefaultAnalysisTechnologyCatalog;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.AnalysisCriterion;
+import com.ororura.analyzer.analysis.semantic.CriterionAssessment;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -7,8 +17,8 @@ import java.util.Map;
 import com.ororura.analyzer.resume.ai.*;
 import com.ororura.analyzer.resume.api.*;
 import com.ororura.analyzer.resume.config.ResumeScoringProperties;
-import com.ororura.analyzer.resume.market.*;
-import com.ororura.analyzer.vacancy.market.VacancyMarketData;
+import com.ororura.analyzer.market.domain.*;
+import com.ororura.analyzer.market.domain.VacancyMarketData;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,16 +59,16 @@ class DeterministicMarketAnalysisTests {
                 skill("spring_boot", "Spring Boot", SkillEvidenceAnalysis.EvidenceStatus.MEDIUM),
                 skill("graphql", "GraphQL", SkillEvidenceAnalysis.EvidenceStatus.NOT_FOUND)));
         ResumeScoringProperties properties = new ResumeScoringProperties();
-        var grade = new GradeFitAnalysis(ResumeAnalysisResult.CandidateLevel.JUNIOR_PLUS,
-                ResumeAnalysisResult.CandidateLevel.JUNIOR_PLUS, GradeFitAnalysis.GradeFit.MATCH,
+        var grade = new GradeFitAnalysis(CandidateLevel.JUNIOR_PLUS,
+                CandidateLevel.JUNIOR_PLUS, GradeFitAnalysis.GradeFit.MATCH,
                 GradeFitAnalysis.Severity.NONE, 100, new ScoreBreakdown(100, List.of()));
-        var fit = new MarketFitScorer(properties).score(profile(), evidence, 7, 80, grade);
+        var fit = new MarketFitScorer(properties.toPolicy()).score(profile(), evidence, 7, 80, grade);
         assertThat(fit.score()).isBetween(70, 100);
         assertThat(fit.breakdown().components()).isNotEmpty();
-        var gaps = new SkillGapScorer(properties).score(profile(), evidence);
+        var gaps = new SkillGapScorer(properties.toPolicy()).score(profile(), evidence);
         assertThat(gaps.gaps()).filteredOn(value -> value.skill().equals("GraphQL")).singleElement()
                 .extracting(SkillGapAnalysis.SkillGap::priority).isEqualTo(SkillGapAnalysis.GapPriority.LOW);
-        assertThat(new SkillRoiCalculator().calculate(gaps).skills()).allSatisfy(value ->
+        assertThat(new SkillRoiCalculator(AnalysisScoringPolicy.defaults()).calculate(gaps).skills()).allSatisfy(value ->
                 assertThat(value.roiScore()).isBetween(0.0, 10.0));
     }
 
@@ -66,7 +76,7 @@ class DeterministicMarketAnalysisTests {
     void gradeAndVacancyPoliciesUseBlockersSeparatelyFromOverallScore() {
         VacancyMarketData market = new VacancyMarketData("single_vacancy", 1, Map.of(),
                 Map.of("3–6 лет", 1), Map.of(), Map.of(), List.of());
-        GradeFitAnalysis grade = new GradeFitScorer().score(ResumeAnalysisResult.CandidateLevel.JUNIOR_PLUS, market);
+        GradeFitAnalysis grade = new GradeFitScorer().score(CandidateLevel.JUNIOR_PLUS, market);
         assertThat(grade.fit()).isEqualTo(GradeFitAnalysis.GradeFit.SLIGHTLY_UNDERQUALIFIED);
         var fit = new VacancyFitScorer().score(market, new SkillEvidenceAnalysis(List.of()), 12, grade, 90);
         assertThat(fit.blockers()).singleElement().extracting(VacancyFitAnalysis.Blocker::type)

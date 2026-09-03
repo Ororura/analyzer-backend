@@ -1,11 +1,12 @@
-package com.ororura.analyzer.vacancy.sync;
+package com.ororura.analyzer.vacancy.application.sync;
 
 import java.time.Duration;
 
-import com.ororura.analyzer.vacancy.provider.VacancyProvider;
-import com.ororura.analyzer.vacancy.cache.VacancyCacheFacade;
-import com.ororura.analyzer.vacancy.cache.VacancyMarketVersionService;
-import com.ororura.analyzer.vacancy.provider.VacancySourceException;
+import com.ororura.analyzer.vacancy.application.port.VacancyProvider;
+import com.ororura.analyzer.vacancy.infrastructure.cache.VacancyCacheFacade;
+import com.ororura.analyzer.vacancy.infrastructure.cache.VacancyMarketVersionService;
+import com.ororura.analyzer.vacancy.application.port.VacancySourceException;
+import com.ororura.analyzer.vacancy.infrastructure.persistence.VacancySyncPersistenceService;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,10 +26,10 @@ class VacancySyncServiceTests {
                 new VacancySyncProperties(true, Duration.ofMinutes(30), Duration.ZERO,
                         "Java", null, 2, 50, 50), mock(VacancyCacheFacade.class),
                 mock(VacancyMarketVersionService.class),
-                mock(com.ororura.analyzer.vacancy.requirement.generation.MarketProfileRefreshCoordinator.class),
-                new com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry(java.util.List.of(
-                        new com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile(),
-                        new com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile())));
+                mock(com.ororura.analyzer.market.profile.MarketProfileRefreshCoordinator.class),
+                new com.ororura.analyzer.analysis.profile.ResumeAnalysisProfileRegistry(java.util.List.of(
+                        new com.ororura.analyzer.analysis.profile.definition.JavaBackendAnalysisProfile(),
+                        new com.ororura.analyzer.analysis.profile.definition.ReactFrontendAnalysisProfile())));
 
         VacancySyncStats stats = service.synchronize();
 

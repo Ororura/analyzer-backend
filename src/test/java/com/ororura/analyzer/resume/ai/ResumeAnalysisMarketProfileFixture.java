@@ -1,12 +1,15 @@
 package com.ororura.analyzer.resume.ai;
 
+import com.ororura.analyzer.analysis.profile.DefaultAnalysisTechnologyCatalog;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfileDefinition;
+
 import java.time.Instant;
 import java.util.List;
-import com.ororura.analyzer.resume.market.FallbackMarketProfileDefinition;
-import com.ororura.analyzer.resume.market.JavaBackendFallbackMarketProfile;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfileFactory;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
-import com.ororura.analyzer.resume.market.ReactFrontendFallbackMarketProfile;
+import com.ororura.analyzer.market.profile.FallbackMarketProfileDefinition;
+import com.ororura.analyzer.market.profile.JavaBackendFallbackMarketProfile;
+import com.ororura.analyzer.market.domain.MarketAnalysisProfileFactory;
+import com.ororura.analyzer.market.domain.MarketAnalysisProfile;
+import com.ororura.analyzer.market.profile.ReactFrontendFallbackMarketProfile;
 
 final class ResumeAnalysisMarketProfileFixture {
 

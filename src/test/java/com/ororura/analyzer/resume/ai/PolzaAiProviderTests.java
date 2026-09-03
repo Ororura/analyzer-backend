@@ -1,16 +1,21 @@
 package com.ororura.analyzer.resume.ai;
 
+import com.ororura.analyzer.resume.infrastructure.ai.LlmResponseParser;
+import com.ororura.analyzer.resume.infrastructure.ai.ResumeAnalysisPromptFactory;
+import com.ororura.analyzer.resume.infrastructure.ai.ResumeAnalysisSchemaFactory;
+import com.ororura.analyzer.resume.infrastructure.ai.polza.PolzaAiProvider;
+
 import java.util.List;
 import java.util.Map;
 import java.net.URI;
 import java.time.Duration;
 
-import com.ororura.analyzer.polza.PolzaClient;
-import com.ororura.analyzer.polza.PolzaClientException;
-import com.ororura.analyzer.polza.PolzaProperties;
+import com.ororura.analyzer.integration.polza.PolzaClient;
+import com.ororura.analyzer.integration.polza.PolzaClientException;
+import com.ororura.analyzer.integration.polza.PolzaProperties;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
-import com.ororura.analyzer.vacancy.market.VacancyMarketData;
+import com.ororura.analyzer.market.domain.VacancyMarketData;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 

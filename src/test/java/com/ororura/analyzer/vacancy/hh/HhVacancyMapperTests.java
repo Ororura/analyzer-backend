@@ -1,10 +1,10 @@
-package com.ororura.analyzer.vacancy.hh;
+package com.ororura.analyzer.vacancy.infrastructure.hh;
 
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.model.Salary;
-import com.ororura.analyzer.vacancy.model.Vacancy;
-import com.ororura.analyzer.vacancy.hh.dto.HhDtos.SourceVacancy;
+import com.ororura.analyzer.vacancy.domain.Salary;
+import com.ororura.analyzer.vacancy.domain.Vacancy;
+import com.ororura.analyzer.vacancy.infrastructure.hh.dto.HhDtos.SourceVacancy;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -1,10 +1,8 @@
 package com.ororura.analyzer.resume.domain;
 
-import org.springframework.stereotype.Component;
 
-import com.ororura.analyzer.resume.api.ResumeAnalysisResult.CandidateLevel;
+import com.ororura.analyzer.resume.domain.analysis.CandidateLevel;
 
-@Component
 public class CandidateLevelPolicy {
 
     public CandidateLevel detect(int months, int technical, int responsibility, int overall) {

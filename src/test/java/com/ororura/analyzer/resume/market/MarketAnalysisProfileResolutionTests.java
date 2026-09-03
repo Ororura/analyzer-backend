@@ -1,10 +1,14 @@
-package com.ororura.analyzer.resume.market;
+package com.ororura.analyzer.market.domain;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.market.application.DefaultMarketAnalysisProfileProvider;
+import com.ororura.analyzer.market.application.port.MarketAnalysisProfileFallback;
+import com.ororura.analyzer.market.application.port.MarketAnalysisProfileStore;
+import com.ororura.analyzer.market.infrastructure.store.InMemoryMarketAnalysisProfileStore;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -1,4 +1,4 @@
-package com.ororura.analyzer.vacancy.hh;
+package com.ororura.analyzer.vacancy.infrastructure.hh;
 
 import org.junit.jupiter.api.Test;
 

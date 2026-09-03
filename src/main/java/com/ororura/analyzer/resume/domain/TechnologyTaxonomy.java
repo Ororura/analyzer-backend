@@ -9,11 +9,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
-import com.ororura.analyzer.resume.market.MarketRequirement;
-import org.springframework.stereotype.Component;
+import com.ororura.analyzer.market.domain.MarketAnalysisProfile;
+import com.ororura.analyzer.market.domain.MarketRequirement;
 
-@Component
 public class TechnologyTaxonomy {
 
     public enum Evidence { CONFIRMED, WEAK, EXPLICIT, MISSING }

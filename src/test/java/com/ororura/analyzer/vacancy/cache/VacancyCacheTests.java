@@ -1,4 +1,4 @@
-package com.ororura.analyzer.vacancy.cache;
+package com.ororura.analyzer.vacancy.infrastructure.cache;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -6,8 +6,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.ororura.analyzer.vacancy.model.Pagination;
-import com.ororura.analyzer.vacancy.model.VacancySearchResult;
+import com.ororura.analyzer.vacancy.application.port.VacancyQueryResult;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -36,7 +35,7 @@ class VacancyCacheTests {
         Object restored = search.getValueSerializationPair().read(serialized.asReadOnlyBuffer());
 
         assertThat(json).startsWith("{");
-        assertThat(restored).isExactlyInstanceOf(VacancySearchResult.class).isEqualTo(expected);
+        assertThat(restored).isExactlyInstanceOf(VacancyQueryResult.class).isEqualTo(expected);
         assertThat(search.getKeyPrefixFor(VacancyCacheFacade.SEARCH)).isEqualTo("vacancy:v2:search::");
     }
 
@@ -45,11 +44,11 @@ class VacancyCacheTests {
         var loads = new AtomicInteger();
         var facade = new VacancyCacheFacade(new ConcurrentMapCacheManager(VacancyCacheFacade.SEARCH));
 
-        VacancySearchResult first = facade.search("key", () -> {
+        VacancyQueryResult first = facade.search("key", () -> {
             loads.incrementAndGet();
             return result();
         });
-        VacancySearchResult second = facade.search("key", () -> {
+        VacancyQueryResult second = facade.search("key", () -> {
             loads.incrementAndGet();
             return result();
         });
@@ -64,8 +63,8 @@ class VacancyCacheTests {
         manager.getCache(VacancyCacheFacade.SEARCH).put("key", "object from an incompatible class loader");
         var facade = new VacancyCacheFacade(manager);
 
-        VacancySearchResult loaded = facade.search("key", VacancyCacheTests::result);
-        VacancySearchResult cached = facade.search("key", () -> {
+        VacancyQueryResult loaded = facade.search("key", VacancyCacheTests::result);
+        VacancyQueryResult cached = facade.search("key", () -> {
             throw new AssertionError("cache hit must not call the loader");
         });
 
@@ -73,8 +72,7 @@ class VacancyCacheTests {
         assertThat(cached).isSameAs(loaded);
     }
 
-    private static VacancySearchResult result() {
-        return new VacancySearchResult(List.of(), 0, 20, 0, 0L,
-                new Pagination(0, 20, 0, false), List.of());
+    private static VacancyQueryResult result() {
+        return new VacancyQueryResult(List.of(), 0, 20, 0, 0L, false, List.of());
     }
 }

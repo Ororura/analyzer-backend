@@ -5,11 +5,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.ororura.analyzer.resume.ai.AnalysisCriterion;
-import com.ororura.analyzer.resume.ai.CriterionAssessment;
-import org.springframework.stereotype.Component;
+import com.ororura.analyzer.analysis.profile.AnalysisCriterion;
+import com.ororura.analyzer.analysis.semantic.CriterionAssessment;
 
-@Component
 public class OverallScoreCalculator {
 
     private static final double NORMALIZED_WEIGHT_EPSILON = 1e-9;

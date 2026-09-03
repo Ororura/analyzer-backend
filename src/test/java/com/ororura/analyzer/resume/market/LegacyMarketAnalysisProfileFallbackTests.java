@@ -1,15 +1,18 @@
-package com.ororura.analyzer.resume.market;
+package com.ororura.analyzer.market.domain;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
-import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
-import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
-import com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfileRegistry;
+import com.ororura.analyzer.analysis.profile.definition.JavaBackendAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.definition.ReactFrontendAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.DefaultAnalysisTechnologyCatalog;
+import com.ororura.analyzer.market.profile.ConfiguredMarketAnalysisProfileFallback;
+import com.ororura.analyzer.market.profile.JavaBackendFallbackMarketProfile;
+import com.ororura.analyzer.market.profile.ReactFrontendFallbackMarketProfile;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,7 +23,7 @@ class LegacyMarketAnalysisProfileFallbackTests {
     void createsVersionedIsolatedFallbackProfiles() {
         Clock clock = Clock.fixed(Instant.parse("2026-08-30T10:00:00Z"), ZoneOffset.UTC);
         ResumeAnalysisProfileRegistry registry = new ResumeAnalysisProfileRegistry(List.of(
-                new JavaBackendAnalysisProfile(), new ReactFrontendAnalysisProfile()));
+                new JavaBackendAnalysisProfile("Java Backend Developer"), new ReactFrontendAnalysisProfile()));
         var catalog = new DefaultAnalysisTechnologyCatalog();
         ConfiguredMarketAnalysisProfileFallback fallback = new ConfiguredMarketAnalysisProfileFallback(
                 registry, new MarketAnalysisProfileFactory(), List.of(

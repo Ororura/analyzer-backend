@@ -1,5 +1,8 @@
 package com.ororura.analyzer.resume.application;
 
+import com.ororura.analyzer.analysis.scoring.AnalysisScoringPolicy;
+import com.ororura.analyzer.analysis.profile.SkillNormalizer;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -7,40 +10,41 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.ororura.analyzer.resume.ai.AiProvider;
-import com.ororura.analyzer.resume.ai.AiProviderRegistry;
-import com.ororura.analyzer.resume.ai.AiProviderType;
-import com.ororura.analyzer.resume.ai.LlmResponseValidator;
-import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
-import com.ororura.analyzer.resume.ai.CriterionAssessment;
-import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
-import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
+import com.ororura.analyzer.resume.application.port.AiProvider;
+import com.ororura.analyzer.resume.application.AiProviderRegistry;
+import com.ororura.analyzer.resume.application.port.AiProviderType;
+import com.ororura.analyzer.resume.application.LlmResponseValidator;
+import com.ororura.analyzer.analysis.semantic.LlmResumeAnalysisResponse;
+import com.ororura.analyzer.resume.application.port.ResumeDocument;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfileRegistry;
+import com.ororura.analyzer.analysis.semantic.CriterionAssessment;
+import com.ororura.analyzer.analysis.profile.definition.JavaBackendAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.definition.ReactFrontendAnalysisProfile;
 import com.ororura.analyzer.resume.api.ResumeAnalysisResult;
-import com.ororura.analyzer.resume.api.VacancyAnalysisMode;
-import com.ororura.analyzer.resume.api.VacancyAnalysisRequest;
+import com.ororura.analyzer.resume.api.ResumeAnalysisApiMapper;
+import com.ororura.analyzer.resume.api.ResumeAnalysisMarkdownRenderer;
 import com.ororura.analyzer.resume.config.ResumeAnalysisProperties;
 import com.ororura.analyzer.resume.config.AiProperties;
 import com.ororura.analyzer.resume.domain.*;
-import com.ororura.analyzer.resume.pdf.PdfFileValidator;
-import com.ororura.analyzer.resume.pdf.PdfTextExtractor;
+import com.ororura.analyzer.resume.application.PdfFileValidator;
+import com.ororura.analyzer.resume.application.port.PdfTextExtractor;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
-import com.ororura.analyzer.resume.market.ConfiguredMarketAnalysisProfileFallback;
-import com.ororura.analyzer.resume.market.JavaBackendFallbackMarketProfile;
-import com.ororura.analyzer.resume.market.ReactFrontendFallbackMarketProfile;
-import com.ororura.analyzer.resume.market.ResolvedMarketAnalysisProfile;
-import com.ororura.analyzer.resume.market.MarketProfileSource;
-import com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfileFactory;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfileProvider;
-import com.ororura.analyzer.vacancy.market.VacancyMarketService;
-import com.ororura.analyzer.vacancy.selection.SelectionMode;
-import com.ororura.analyzer.vacancy.selection.VacancySelection;
-import com.ororura.analyzer.vacancy.market.VacancyMarketData;
+import com.ororura.analyzer.market.profile.ConfiguredMarketAnalysisProfileFallback;
+import com.ororura.analyzer.market.profile.JavaBackendFallbackMarketProfile;
+import com.ororura.analyzer.market.profile.ReactFrontendFallbackMarketProfile;
+import com.ororura.analyzer.market.domain.ResolvedMarketAnalysisProfile;
+import com.ororura.analyzer.market.domain.MarketProfileSource;
+import com.ororura.analyzer.analysis.profile.DefaultAnalysisTechnologyCatalog;
+import com.ororura.analyzer.market.domain.MarketAnalysisProfileFactory;
+import com.ororura.analyzer.market.application.port.MarketAnalysisProfileProvider;
+import com.ororura.analyzer.market.application.VacancyMarketService;
+import com.ororura.analyzer.market.application.VacancyMarketRequest;
+import com.ororura.analyzer.vacancy.application.selection.SelectionMode;
+import com.ororura.analyzer.vacancy.application.selection.VacancySelection;
+import com.ororura.analyzer.market.domain.VacancyMarketData;
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.util.unit.DataSize;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,20 +73,20 @@ class ResumeAnalysisServiceTests {
         VacancyMarketService marketService = mock(VacancyMarketService.class);
         AiProvider polza = provider(AiProviderType.POLZA, "polza-model");
         AiProvider codex = provider(AiProviderType.CODEX_CLI, null);
-        MockMultipartFile file = new MockMultipartFile("file", "resume.pdf", "application/pdf", "pdf".getBytes());
+        ResumeDocument document = document();
         byte[] bytes = "validated".getBytes();
         String text = "Java Spring Backend PostgreSQL Docker";
         VacancyMarketData market = market();
         VacancyMarketData reactMarket = reactMarket();
-        when(fileValidator.validate(file)).thenReturn(bytes);
+        when(fileValidator.validate(document)).thenReturn(bytes);
         when(extractor.extract(bytes)).thenReturn(text);
         when(marketService.load(ResumeAnalysisProfile.JAVA_BACKEND, "Java Backend Developer")).thenReturn(market);
         when(marketService.load(ResumeAnalysisProfile.REACT_FRONTEND, "React Frontend Developer"))
                 .thenReturn(reactMarket);
-        VacancyAnalysisRequest selectedRequest = new VacancyAnalysisRequest(VacancyAnalysisMode.SELECTED_VACANCIES,
+        VacancyMarketRequest selectedRequest = new VacancyMarketRequest(VacancyMarketRequest.Mode.SELECTED_VACANCIES,
                 null, new VacancySelection(SelectionMode.SELECTED, List.of("hh-1", "hh-2"), null, List.of()));
-        VacancyAnalysisRequest singleRequest = new VacancyAnalysisRequest(
-                VacancyAnalysisMode.SINGLE_VACANCY, "hh-1", null);
+        VacancyMarketRequest singleRequest = new VacancyMarketRequest(
+                VacancyMarketRequest.Mode.SINGLE_VACANCY, "hh-1", null);
         when(marketService.load(ResumeAnalysisProfile.JAVA_BACKEND, selectedRequest, "Java Backend Developer"))
                 .thenReturn(market);
         when(marketService.load(ResumeAnalysisProfile.JAVA_BACKEND, singleRequest, "Java Backend Developer"))
@@ -94,19 +98,23 @@ class ResumeAnalysisServiceTests {
                 new AiProperties(AiProviderType.POLZA));
 
         TechnologyTaxonomy taxonomy = new TechnologyTaxonomy();
-        AtsScoreCalculator ats = new AtsScoreCalculator();
+        AnalysisScoringPolicy scoring = AnalysisScoringPolicy.defaults();
+        AtsScoreCalculator ats = new AtsScoreCalculator(scoring);
+        OverallScoreCalculator overall = new OverallScoreCalculator();
+        ResumeAnalysisEngine analysisEngine = new ResumeAnalysisEngine(new ExperienceCalculator(), taxonomy, ats,
+                overall, new CandidateStrengthCalculator(), new CandidateLevelPolicy(),
+                new InterviewChancePolicy(), engine(catalog, scoring, ats, overall));
         ResumeAnalysisService service = new ResumeAnalysisService(fileValidator, extractor, marketService, registry,
-                new LlmResponseValidator(clock), new ExperienceCalculator(), taxonomy, ats,
-                new OverallScoreCalculator(), new CandidateStrengthCalculator(), new CandidateLevelPolicy(),
-                new InterviewChancePolicy(), new ResumeAnalysisAssembler(properties), properties, clock,
-                marketProfiles);
+                new LlmResponseValidator(clock), analysisEngine, new ResumeAnalysisAssembler(properties),
+                properties, clock, marketProfiles);
+        ResumeAnalysisApiMapper apiMapper = new ResumeAnalysisApiMapper(new ResumeAnalysisMarkdownRenderer());
 
-        ResumeAnalysisResult result = service.analyze(file, AiProviderType.POLZA);
-        ResumeAnalysisResult codexResult = service.analyze(file, AiProviderType.CODEX_CLI);
-        ResumeAnalysisResult selectedResult = service.analyze(file, AiProviderType.POLZA, selectedRequest);
-        ResumeAnalysisResult singleResult = service.analyze(file, AiProviderType.POLZA, singleRequest);
-        ResumeAnalysisResult reactResult = service.analyze(file, AiProviderType.POLZA,
-                ResumeAnalysisProfile.REACT_FRONTEND, VacancyAnalysisRequest.autoMarket());
+        ResumeAnalysisResult result = apiMapper.toResponse(service.analyze(document, AiProviderType.POLZA));
+        ResumeAnalysisResult codexResult = apiMapper.toResponse(service.analyze(document, AiProviderType.CODEX_CLI));
+        ResumeAnalysisResult selectedResult = apiMapper.toResponse(service.analyze(document, AiProviderType.POLZA, selectedRequest));
+        ResumeAnalysisResult singleResult = apiMapper.toResponse(service.analyze(document, AiProviderType.POLZA, singleRequest));
+        ResumeAnalysisResult reactResult = apiMapper.toResponse(service.analyze(document, AiProviderType.POLZA,
+                ResumeAnalysisProfile.REACT_FRONTEND, VacancyMarketRequest.autoMarket()));
 
         assertThat(result.experience()).isEqualTo(new ResumeAnalysisResult.Experience(16, 1, 4));
         assertThat(result.scores().commercialExperience()).isEqualTo(7);
@@ -156,22 +164,34 @@ class ResumeAnalysisServiceTests {
         PdfFileValidator fileValidator = mock(PdfFileValidator.class);
         PdfTextExtractor extractor = mock(PdfTextExtractor.class);
         AiProviderRegistry registry = mock(AiProviderRegistry.class);
-        MockMultipartFile file = new MockMultipartFile("file", "resume.pdf", "application/pdf", "pdf".getBytes());
+        ResumeDocument document = document();
         byte[] bytes = "validated".getBytes();
-        when(fileValidator.validate(file)).thenReturn(bytes);
+        when(fileValidator.validate(document)).thenReturn(bytes);
         when(extractor.extract(bytes)).thenReturn("12345");
         ResumeAnalysisService service = new ResumeAnalysisService(fileValidator, extractor,
                 mock(VacancyMarketService.class), registry, mock(LlmResponseValidator.class),
-                mock(ExperienceCalculator.class), mock(TechnologyTaxonomy.class), mock(AtsScoreCalculator.class),
-                mock(OverallScoreCalculator.class), mock(CandidateStrengthCalculator.class),
-                mock(CandidateLevelPolicy.class), mock(InterviewChancePolicy.class),
-                mock(ResumeAnalysisAssembler.class), properties, clock, mock(MarketAnalysisProfileProvider.class));
+                mock(ResumeAnalysisEngine.class), mock(ResumeAnalysisAssembler.class), properties, clock,
+                mock(MarketAnalysisProfileProvider.class));
 
-        assertThatThrownBy(() -> service.analyze(file, AiProviderType.CODEX_CLI))
+        assertThatThrownBy(() -> service.analyze(document, AiProviderType.CODEX_CLI))
                 .isInstanceOf(ResumeAnalysisException.class)
                 .extracting(error -> ((ResumeAnalysisException) error).getCode())
                 .isEqualTo(ResumeErrorCode.RESUME_TEXT_TOO_LARGE);
         verifyNoInteractions(registry);
+    }
+
+    private static ResumeDocument document() {
+        byte[] bytes = "pdf".getBytes();
+        return new ResumeDocument("resume.pdf", "application/pdf", bytes.length, bytes);
+    }
+
+    private static DeterministicAnalysisEngine engine(DefaultAnalysisTechnologyCatalog catalog,
+            AnalysisScoringPolicy scoring, AtsScoreCalculator ats, OverallScoreCalculator overall) {
+        return new DeterministicAnalysisEngine(new EvidenceClassifier(new SkillNormalizer(catalog)),
+                new TechnicalProfileScorer(overall), new GradeFitScorer(), new MarketFitScorer(scoring),
+                new SkillGapScorer(scoring), new SkillRoiCalculator(scoring), ats, new ClaimRiskAnalyzer(),
+                new VacancyFitScorer(), new RiskDeduplicator(), new RecommendationRanker(),
+                new MarketPercentileCalculator());
     }
 
     private static AiProvider provider(AiProviderType type, String model) {
@@ -219,7 +239,7 @@ class ResumeAnalysisServiceTests {
 
     private static ResumeAnalysisProfileRegistry profileRegistry(ResumeAnalysisProperties properties) {
         return new ResumeAnalysisProfileRegistry(List.of(
-                new JavaBackendAnalysisProfile(properties), new ReactFrontendAnalysisProfile()));
+                new JavaBackendAnalysisProfile(properties.targetRole()), new ReactFrontendAnalysisProfile()));
     }
 
     private static VacancyMarketData market() {

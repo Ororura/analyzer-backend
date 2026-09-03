@@ -1,10 +1,8 @@
 package com.ororura.analyzer.resume.domain;
 
-import org.springframework.stereotype.Component;
 
-import com.ororura.analyzer.resume.api.ResumeAnalysisResult.InterviewChance;
+import com.ororura.analyzer.resume.domain.analysis.InterviewChance;
 
-@Component
 public class InterviewChancePolicy {
 
     public InterviewChance hr(int ats, int overall) {

@@ -1,4 +1,4 @@
-package com.ororura.analyzer.vacancy.requirement.generation;
+package com.ororura.analyzer.market.profile;
 
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;

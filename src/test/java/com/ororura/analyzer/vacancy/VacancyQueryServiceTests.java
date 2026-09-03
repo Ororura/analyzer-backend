@@ -3,20 +3,22 @@ package com.ororura.analyzer.vacancy;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.model.Salary;
-import com.ororura.analyzer.vacancy.model.Vacancy;
+import com.ororura.analyzer.vacancy.domain.Salary;
+import com.ororura.analyzer.vacancy.domain.Vacancy;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.ororura.analyzer.vacancy.cache.VacancyCacheFacade;
-import com.ororura.analyzer.vacancy.cache.VacancyMarketVersionService;
-import com.ororura.analyzer.vacancy.search.VacancySearchCacheKey;
-import com.ororura.analyzer.vacancy.search.VacancyCriteriaNormalizer;
-import com.ororura.analyzer.vacancy.search.VacancyQueryService;
-import com.ororura.analyzer.vacancy.search.VacancySearchCriteria;
-import com.ororura.analyzer.vacancy.search.VacancySearchService;
-import com.ororura.analyzer.vacancy.search.VacancySort;
-import com.ororura.analyzer.vacancy.search.WorkFormat;
+import com.ororura.analyzer.vacancy.infrastructure.cache.VacancyCacheFacade;
+import com.ororura.analyzer.vacancy.infrastructure.cache.VacancyMarketVersionService;
+import com.ororura.analyzer.vacancy.application.search.VacancySearchCacheKey;
+import com.ororura.analyzer.vacancy.application.search.VacancyCriteriaNormalizer;
+import com.ororura.analyzer.vacancy.application.search.VacancyQueryService;
+import com.ororura.analyzer.vacancy.application.search.VacancySearchCriteria;
+import com.ororura.analyzer.vacancy.infrastructure.persistence.VacancySearchService;
+import com.ororura.analyzer.vacancy.application.port.VacancyCatalog;
+import com.ororura.analyzer.vacancy.application.search.VacancySort;
+import com.ororura.analyzer.vacancy.application.search.WorkFormat;
+import com.ororura.analyzer.vacancy.api.VacancyApiMapper;
 import org.springframework.cache.support.NoOpCacheManager;
 
 import static org.mockito.Mockito.mock;
@@ -32,14 +34,15 @@ public class VacancyQueryServiceTests {
     @Test
     void appliesBackendFiltersAndReturnsLightweightPagination() {
         VacancySearchCriteria criteria = criteria(List.of("spring-boot"));
-        when(searchService.search(org.mockito.ArgumentMatchers.any())).thenReturn(new VacancySearchService.LocalSearchResult(
+        when(searchService.search(org.mockito.ArgumentMatchers.any())).thenReturn(new VacancyCatalog.SearchPage(
                 List.of(vacancy("1", "Acme", "Spring Boot", 150_000)), 3, 60L, true, List.of()));
 
         var result = service.search(criteria);
+        var response = new VacancyApiMapper().toSearchResponse(result);
 
-        assertThat(result.items()).extracting(item -> item.id()).containsExactly("hh-1");
-        assertThat(result.items().getFirst().workFormat()).isEqualTo("REMOTE");
-        assertThat(result.items().getFirst().getClass().getRecordComponents())
+        assertThat(response.items()).extracting(item -> item.id()).containsExactly("hh-1");
+        assertThat(response.items().getFirst().workFormat()).isEqualTo("REMOTE");
+        assertThat(response.items().getFirst().getClass().getRecordComponents())
                 .extracting(java.lang.reflect.RecordComponent::getName).doesNotContain("description");
         assertThat(result.page()).isZero();
         assertThat(result.pageSize()).isEqualTo(20);

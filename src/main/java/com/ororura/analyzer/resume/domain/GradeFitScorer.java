@@ -1,13 +1,11 @@
 package com.ororura.analyzer.resume.domain;
 
 import java.util.Locale;
-import com.ororura.analyzer.resume.api.GradeFitAnalysis;
-import com.ororura.analyzer.resume.api.ResumeAnalysisResult.CandidateLevel;
-import com.ororura.analyzer.resume.api.ScoreBreakdown;
-import com.ororura.analyzer.vacancy.market.VacancyMarketData;
-import org.springframework.stereotype.Component;
+import com.ororura.analyzer.resume.domain.analysis.GradeFitAnalysis;
+import com.ororura.analyzer.resume.domain.analysis.CandidateLevel;
+import com.ororura.analyzer.resume.domain.analysis.ScoreBreakdown;
+import com.ororura.analyzer.market.domain.VacancyMarketData;
 
-@Component
 public class GradeFitScorer {
     public GradeFitAnalysis score(CandidateLevel candidate, VacancyMarketData market) {
         CandidateLevel target = target(market);

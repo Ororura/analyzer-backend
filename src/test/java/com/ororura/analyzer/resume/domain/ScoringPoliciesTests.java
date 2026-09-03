@@ -2,10 +2,10 @@ package com.ororura.analyzer.resume.domain;
 
 import org.junit.jupiter.api.Test;
 
-import com.ororura.analyzer.resume.api.ResumeAnalysisResult.CandidateLevel;
-import com.ororura.analyzer.resume.api.ResumeAnalysisResult.InterviewChance;
-import com.ororura.analyzer.resume.ai.CriterionAssessment;
-import com.ororura.analyzer.resume.ai.AnalysisCriterion;
+import com.ororura.analyzer.resume.domain.analysis.CandidateLevel;
+import com.ororura.analyzer.resume.domain.analysis.InterviewChance;
+import com.ororura.analyzer.analysis.semantic.CriterionAssessment;
+import com.ororura.analyzer.analysis.profile.AnalysisCriterion;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,7 +54,7 @@ class ScoringPoliciesTests {
     }
 
     private static List<CriterionAssessment> scores(
-            List<com.ororura.analyzer.resume.ai.AnalysisCriterion> criteria, int score) {
+            List<com.ororura.analyzer.analysis.profile.AnalysisCriterion> criteria, int score) {
         return criteria.stream().map(value -> new CriterionAssessment(value.id(), score, List.of())).toList();
     }
 

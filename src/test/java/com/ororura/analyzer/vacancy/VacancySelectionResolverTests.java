@@ -2,12 +2,12 @@ package com.ororura.analyzer.vacancy;
 
 import java.util.List;
 
-import com.ororura.analyzer.vacancy.search.VacancyQueryService;
-import com.ororura.analyzer.vacancy.search.VacancySearchCriteria;
-import com.ororura.analyzer.vacancy.selection.SelectionMode;
-import com.ororura.analyzer.vacancy.selection.VacancySelection;
-import com.ororura.analyzer.vacancy.selection.VacancySelectionException;
-import com.ororura.analyzer.vacancy.selection.VacancySelectionResolver;
+import com.ororura.analyzer.vacancy.application.search.VacancyQueryService;
+import com.ororura.analyzer.vacancy.application.search.VacancySearchCriteria;
+import com.ororura.analyzer.vacancy.application.selection.SelectionMode;
+import com.ororura.analyzer.vacancy.application.selection.VacancySelection;
+import com.ororura.analyzer.vacancy.application.selection.VacancySelectionException;
+import com.ororura.analyzer.vacancy.application.selection.VacancySelectionResolver;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

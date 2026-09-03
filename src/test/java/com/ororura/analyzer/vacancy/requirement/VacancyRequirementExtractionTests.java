@@ -1,9 +1,9 @@
-package com.ororura.analyzer.vacancy.requirement;
+package com.ororura.analyzer.market.requirement;
 
 import java.util.List;
 
-import com.ororura.analyzer.polza.PolzaClient;
-import com.ororura.analyzer.polza.PolzaDtos.CompletionRequest;
+import com.ororura.analyzer.integration.polza.PolzaClient;
+import com.ororura.analyzer.integration.polza.PolzaDtos.CompletionRequest;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 

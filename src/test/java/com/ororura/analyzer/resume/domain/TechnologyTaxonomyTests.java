@@ -2,11 +2,11 @@ package com.ororura.analyzer.resume.domain;
 
 import java.time.Instant;
 import java.util.List;
-import com.ororura.analyzer.resume.ai.AnalysisCriterion;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
-import com.ororura.analyzer.resume.market.MarketRequirement;
-import com.ororura.analyzer.resume.market.RequirementType;
+import com.ororura.analyzer.analysis.profile.AnalysisCriterion;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.market.domain.MarketAnalysisProfile;
+import com.ororura.analyzer.market.domain.MarketRequirement;
+import com.ororura.analyzer.market.domain.RequirementType;
 
 import org.junit.jupiter.api.Test;
 

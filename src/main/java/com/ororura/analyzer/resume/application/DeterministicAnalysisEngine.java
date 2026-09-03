@@ -4,12 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
-import com.ororura.analyzer.resume.api.*;
-import com.ororura.analyzer.resume.api.ResumeAnalysisResult.CandidateLevel;
+import com.ororura.analyzer.analysis.semantic.LlmResumeAnalysisResponse;
+import com.ororura.analyzer.resume.domain.analysis.*;
 import com.ororura.analyzer.resume.domain.*;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
-import com.ororura.analyzer.vacancy.market.VacancyMarketData;
+import com.ororura.analyzer.market.domain.MarketAnalysisProfile;
+import com.ororura.analyzer.market.domain.VacancyMarketData;
 import org.springframework.stereotype.Component;
 
 @Component

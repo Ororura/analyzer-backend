@@ -4,10 +4,11 @@ import java.time.Instant;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.ororura.analyzer.resume.ai.AiProviderType;
-import com.ororura.analyzer.resume.ai.CriterionAssessment;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.market.MarketProfileSource;
+import com.ororura.analyzer.resume.application.port.AiProviderType;
+import com.ororura.analyzer.analysis.semantic.CriterionAssessment;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.resume.domain.analysis.*;
+import com.ororura.analyzer.market.domain.MarketProfileSource;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(name = "ResumeAnalysisResult")
@@ -94,24 +95,6 @@ public record ResumeAnalysisResult(
     }
 
     public record Market(String source, int sampleSize) {
-    }
-
-    @Deprecated
-    public record VacancyFit(
-            List<String> requiredSkills,
-            List<String> optionalSkills,
-            List<String> missingSkills,
-            int experienceRelevanceScore,
-            String candidateLevelFit,
-            List<String> risks,
-            List<String> probableRejectionReasons) {
-        public VacancyFit {
-            requiredSkills = List.copyOf(requiredSkills);
-            optionalSkills = List.copyOf(optionalSkills);
-            missingSkills = List.copyOf(missingSkills);
-            risks = List.copyOf(risks);
-            probableRejectionReasons = List.copyOf(probableRejectionReasons);
-        }
     }
 
     public record Metadata(int analysisSchemaVersion, ResumeAnalysisProfile analysisProfile, String analysisVersion,

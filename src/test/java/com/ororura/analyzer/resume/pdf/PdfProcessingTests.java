@@ -1,5 +1,9 @@
 package com.ororura.analyzer.resume.pdf;
 
+import com.ororura.analyzer.resume.application.PdfFileValidator;
+import com.ororura.analyzer.resume.application.port.ResumeDocument;
+import com.ororura.analyzer.resume.infrastructure.pdf.PdfBoxTextExtractor;
+
 import java.io.ByteArrayOutputStream;
 
 import com.ororura.analyzer.resume.config.ResumeAnalysisProperties;
@@ -11,7 +15,6 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.util.unit.DataSize;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,17 +29,17 @@ class PdfProcessingTests {
     @Test
     void validatesAndExtractsTextPdf() throws Exception {
         byte[] pdf = pdf("Java Spring Backend");
-        byte[] validated = validator.validate(new MockMultipartFile("file", "resume.pdf", "application/pdf", pdf));
+        byte[] validated = validator.validate(document("resume.pdf", "application/pdf", pdf));
         assertThat(extractor.extract(validated)).contains("Java Spring Backend");
     }
 
     @Test
     void rejectsWrongMimeMagicOversizeAndEmptyText() throws Exception {
         byte[] pdf = pdf("Java");
-        assertCode(new MockMultipartFile("file", "resume.pdf", "text/plain", pdf), ResumeErrorCode.UNSUPPORTED_FILE_TYPE);
-        assertCode(new MockMultipartFile("file", "resume.pdf", "application/pdf", "not-pdf".getBytes()),
+        assertCode(document("resume.pdf", "text/plain", pdf), ResumeErrorCode.UNSUPPORTED_FILE_TYPE);
+        assertCode(document("resume.pdf", "application/pdf", "not-pdf".getBytes()),
                 ResumeErrorCode.UNSUPPORTED_FILE_TYPE);
-        assertCode(new MockMultipartFile("file", "resume.pdf", "application/pdf", new byte[1025]),
+        assertCode(document("resume.pdf", "application/pdf", new byte[1025]),
                 ResumeErrorCode.PDF_TOO_LARGE);
         assertThatThrownBy(() -> extractor.extract(pdf("")))
                 .isInstanceOf(ResumeAnalysisException.class)
@@ -52,11 +55,15 @@ class PdfProcessingTests {
                 .isEqualTo(ResumeErrorCode.PDF_PARSE_FAILED);
     }
 
-    private void assertCode(MockMultipartFile file, ResumeErrorCode code) {
-        assertThatThrownBy(() -> validator.validate(file))
+    private void assertCode(ResumeDocument document, ResumeErrorCode code) {
+        assertThatThrownBy(() -> validator.validate(document))
                 .isInstanceOf(ResumeAnalysisException.class)
                 .extracting(error -> ((ResumeAnalysisException) error).getCode())
                 .isEqualTo(code);
+    }
+
+    private static ResumeDocument document(String filename, String contentType, byte[] bytes) {
+        return new ResumeDocument(filename, contentType, bytes.length, bytes);
     }
 
     private static byte[] pdf(String text) throws Exception {

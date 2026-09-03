@@ -1,9 +1,9 @@
-package com.ororura.analyzer.vacancy.hh;
+package com.ororura.analyzer.vacancy.infrastructure.hh;
 
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 
-import com.ororura.analyzer.vacancy.provider.VacancySourceException;
+import com.ororura.analyzer.vacancy.application.port.VacancySourceException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;

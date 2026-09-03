@@ -4,14 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import com.ororura.analyzer.resume.api.GradeFitAnalysis;
-import com.ororura.analyzer.resume.api.ScoreBreakdown;
-import com.ororura.analyzer.resume.api.SkillEvidenceAnalysis;
-import com.ororura.analyzer.resume.api.VacancyFitAnalysis;
-import com.ororura.analyzer.vacancy.market.VacancyMarketData;
-import org.springframework.stereotype.Component;
+import com.ororura.analyzer.resume.domain.analysis.GradeFitAnalysis;
+import com.ororura.analyzer.resume.domain.analysis.ScoreBreakdown;
+import com.ororura.analyzer.resume.domain.analysis.SkillEvidenceAnalysis;
+import com.ororura.analyzer.resume.domain.analysis.VacancyFitAnalysis;
+import com.ororura.analyzer.market.domain.VacancyMarketData;
 
-@Component
 public class VacancyFitScorer {
     public VacancyFitAnalysis score(VacancyMarketData market, SkillEvidenceAnalysis evidence,
             int commercialMonths, GradeFitAnalysis grade, int technicalScore) {
@@ -38,7 +36,7 @@ public class VacancyFitScorer {
                 recommendation, blockers, new ScoreBreakdown(score, components));
     }
 
-    private static int coverage(List<com.ororura.analyzer.resume.market.MarketSkillStatistics> stats,
+    private static int coverage(List<com.ororura.analyzer.market.domain.MarketSkillStatistics> stats,
             Map<String, SkillEvidenceAnalysis.SkillEvidence> evidence) {
         double total = stats.stream().mapToDouble(value -> value.frequency()).sum();
         if (total == 0) return 100;

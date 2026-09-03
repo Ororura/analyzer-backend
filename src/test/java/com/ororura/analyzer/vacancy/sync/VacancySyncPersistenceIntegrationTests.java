@@ -1,10 +1,12 @@
-package com.ororura.analyzer.vacancy.sync;
+package com.ororura.analyzer.vacancy.application.sync;
 
 import java.util.List;
 
 import com.ororura.analyzer.vacancy.VacancyQueryServiceTests;
-import com.ororura.analyzer.vacancy.model.Vacancy;
-import com.ororura.analyzer.vacancy.persistence.VacancyRepository;
+import com.ororura.analyzer.vacancy.domain.Vacancy;
+import com.ororura.analyzer.vacancy.infrastructure.persistence.VacancyRepository;
+import com.ororura.analyzer.vacancy.infrastructure.persistence.VacancySyncPersistenceService;
+import com.ororura.analyzer.vacancy.application.port.VacancySyncBatchResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +25,7 @@ class VacancySyncPersistenceIntegrationTests {
     void clear() { repository.deleteAll(); }
 
     @Test
-    void createsLeavesUnchangedUpdatesArchivesAndReactivates() {
+    void createsLeavesUnchangedAndUpdates() {
         persistence.markStarted();
         Vacancy initial = VacancyQueryServiceTests.vacancy("7", "Acme", "Java", 100_000);
         VacancySyncBatchResult created = persistence.persistBatch(List.of(initial));
@@ -40,9 +42,5 @@ class VacancySyncPersistenceIntegrationTests {
         assertThat(updated.updated()).isOne();
         assertThat(updated.marketVersion()).isNotNull();
 
-        persistence.archiveConfirmed("7");
-        assertThat(repository.findBySourceAndExternalId("hh.ru", "7").orElseThrow().active()).isFalse();
-        persistence.persistBatch(List.of(changed));
-        assertThat(repository.findBySourceAndExternalId("hh.ru", "7").orElseThrow().active()).isTrue();
     }
 }

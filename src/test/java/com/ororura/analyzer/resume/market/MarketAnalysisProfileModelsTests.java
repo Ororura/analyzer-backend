@@ -1,11 +1,11 @@
-package com.ororura.analyzer.resume.market;
+package com.ororura.analyzer.market.domain;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ororura.analyzer.resume.ai.AnalysisCriterion;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.AnalysisCriterion;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

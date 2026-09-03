@@ -1,25 +1,19 @@
 package com.ororura.analyzer.resume.domain;
 
+import com.ororura.analyzer.analysis.scoring.AnalysisScoringPolicy;
+
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy.Evidence;
 import com.ororura.analyzer.resume.domain.TechnologyTaxonomy.TechnologyProfile;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
-import com.ororura.analyzer.resume.market.MarketRequirement;
-import org.springframework.stereotype.Component;
-import com.ororura.analyzer.resume.api.AtsAnalysis;
-import com.ororura.analyzer.resume.api.ScoreBreakdown;
-import com.ororura.analyzer.resume.ai.LlmResumeAnalysisResponse;
+import com.ororura.analyzer.market.domain.MarketAnalysisProfile;
+import com.ororura.analyzer.market.domain.MarketRequirement;
+import com.ororura.analyzer.resume.domain.analysis.AtsAnalysis;
+import com.ororura.analyzer.resume.domain.analysis.ScoreBreakdown;
+import com.ororura.analyzer.analysis.semantic.LlmResumeAnalysisResponse;
 import java.util.List;
-import com.ororura.analyzer.resume.config.ResumeScoringProperties;
-import org.springframework.beans.factory.annotation.Autowired;
-
-@Component
 public class AtsScoreCalculator {
-    private final ResumeScoringProperties scoring;
+    private final AnalysisScoringPolicy scoring;
 
-    public AtsScoreCalculator() { this(new ResumeScoringProperties()); }
-
-    @Autowired
-    public AtsScoreCalculator(ResumeScoringProperties scoring) { this.scoring = scoring; }
+    public AtsScoreCalculator(AnalysisScoringPolicy scoring) { this.scoring = scoring; }
 
     public AtsScore calculate(int atsReadability, int resumeQuality, int experienceDescription,
             int commercialExperience, TechnologyProfile technologies, MarketAnalysisProfile profile) {

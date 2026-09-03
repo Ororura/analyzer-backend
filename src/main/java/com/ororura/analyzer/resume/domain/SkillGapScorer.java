@@ -1,18 +1,16 @@
 package com.ororura.analyzer.resume.domain;
 
+import com.ororura.analyzer.analysis.scoring.AnalysisScoringPolicy;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import com.ororura.analyzer.resume.api.SkillEvidenceAnalysis;
-import com.ororura.analyzer.resume.api.SkillGapAnalysis;
-import com.ororura.analyzer.resume.config.ResumeScoringProperties;
-import com.ororura.analyzer.resume.market.MarketAnalysisProfile;
-import org.springframework.stereotype.Component;
-
-@Component
+import com.ororura.analyzer.resume.domain.analysis.SkillEvidenceAnalysis;
+import com.ororura.analyzer.resume.domain.analysis.SkillGapAnalysis;
+import com.ororura.analyzer.market.domain.MarketAnalysisProfile;
 public class SkillGapScorer {
-    private final ResumeScoringProperties properties;
-    public SkillGapScorer(ResumeScoringProperties properties) { this.properties = properties; }
+    private final AnalysisScoringPolicy policy;
+    public SkillGapScorer(AnalysisScoringPolicy policy) { this.policy = policy; }
 
     public SkillGapAnalysis score(MarketAnalysisProfile profile, SkillEvidenceAnalysis evidence) {
         Map<String, SkillEvidenceAnalysis.SkillEvidence> bySkill = evidence.skills().stream()
@@ -28,8 +26,8 @@ public class SkillGapScorer {
                     .map(value -> value.requiredFrequency() > 0 ? 1.0
                             : value.preferredFrequency() > 0 ? .75 : .4).orElse(.75);
             double impact = requirement.frequency() * gap * importance;
-            var priority = impact >= properties.getHighGapThreshold() ? SkillGapAnalysis.GapPriority.HIGH
-                    : impact >= properties.getMediumGapThreshold() ? SkillGapAnalysis.GapPriority.MEDIUM
+            var priority = impact >= policy.highGapThreshold() ? SkillGapAnalysis.GapPriority.HIGH
+                    : impact >= policy.mediumGapThreshold() ? SkillGapAnalysis.GapPriority.MEDIUM
                     : SkillGapAnalysis.GapPriority.LOW;
             double gain = Math.round(requirement.frequency() * gap / totalFrequency * 1000) / 1000.0;
             return new SkillGapAnalysis.SkillGap(candidate == null ? normalized(requirement.label()) : candidate.skillId(),

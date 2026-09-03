@@ -1,5 +1,11 @@
 package com.ororura.analyzer.resume.ai;
 
+import com.ororura.analyzer.analysis.semantic.LlmResumeAnalysisResponse;
+import com.ororura.analyzer.resume.infrastructure.ai.LlmResponseParser;
+import com.ororura.analyzer.resume.infrastructure.ai.ResumeAnalysisPromptFactory;
+import com.ororura.analyzer.resume.infrastructure.ai.ResumeAnalysisSchemaFactory;
+import com.ororura.analyzer.resume.infrastructure.ai.codex.CodexCliAiProvider;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -12,13 +18,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.ororura.analyzer.codex.CodexCliAvailabilityChecker;
-import com.ororura.analyzer.codex.CodexCommandFactory;
-import com.ororura.analyzer.codex.CodexCliProperties;
-import com.ororura.analyzer.codex.ProcessRunner;
+import com.ororura.analyzer.integration.codex.CodexCliAvailabilityChecker;
+import com.ororura.analyzer.integration.codex.CodexCommandFactory;
+import com.ororura.analyzer.integration.codex.CodexCliProperties;
+import com.ororura.analyzer.integration.codex.ProcessRunner;
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
 import com.ororura.analyzer.resume.error.ResumeErrorCode;
-import com.ororura.analyzer.vacancy.market.VacancyMarketData;
+import com.ororura.analyzer.market.domain.VacancyMarketData;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 

@@ -1,5 +1,13 @@
 package com.ororura.analyzer.resume.ai;
 
+import com.ororura.analyzer.resume.application.LlmResponseValidator;
+import com.ororura.analyzer.analysis.semantic.CriterionAssessment;
+import com.ororura.analyzer.analysis.semantic.LlmResumeAnalysisResponse;
+import com.ororura.analyzer.resume.infrastructure.ai.LlmResponseParser;
+import com.ororura.analyzer.resume.infrastructure.ai.ResumeAnalysisPromptFactory;
+import com.ororura.analyzer.resume.infrastructure.ai.ResumeAnalysisSchemaFactory;
+import com.ororura.analyzer.analysis.profile.*;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -7,10 +15,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.ororura.analyzer.resume.error.ResumeAnalysisException;
-import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
-import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.definition.JavaBackendAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.definition.ReactFrontendAnalysisProfile;
 import com.ororura.analyzer.resume.config.ResumeAnalysisProperties;
-import com.ororura.analyzer.vacancy.market.VacancyMarketData;
+import com.ororura.analyzer.market.domain.VacancyMarketData;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -253,17 +261,16 @@ class LlmBoundaryTests {
         return new ResumeAnalysisProfileRegistry(List.of(javaDefinition(), new ReactFrontendAnalysisProfile()));
     }
 
-    static com.ororura.analyzer.resume.market.MarketAnalysisProfile javaProfile() {
+    static com.ororura.analyzer.market.domain.MarketAnalysisProfile javaProfile() {
         return ResumeAnalysisMarketProfileFixture.from(javaDefinition());
     }
 
-    static com.ororura.analyzer.resume.market.MarketAnalysisProfile reactProfile() {
+    static com.ororura.analyzer.market.domain.MarketAnalysisProfile reactProfile() {
         return ResumeAnalysisMarketProfileFixture.from(new ReactFrontendAnalysisProfile());
     }
 
     static ResumeAnalysisProfileDefinition javaDefinition() {
-        return new JavaBackendAnalysisProfile(new ResumeAnalysisProperties(
-                DataSize.ofMegabytes(10), "Java Backend Developer", "1", "2026-08", 200_000));
+        return new JavaBackendAnalysisProfile("Java Backend Developer");
     }
 
     private static List<String> textValues(JsonNode array) {

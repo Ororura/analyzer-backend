@@ -1,5 +1,7 @@
 package com.ororura.analyzer.resume.domain;
 
+import com.ororura.analyzer.analysis.scoring.AnalysisScoringPolicy;
+
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -8,8 +10,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AtsScoreCalculatorTests {
 
     private final TechnologyTaxonomy taxonomy = new TechnologyTaxonomy();
-    private final AtsScoreCalculator calculator = new AtsScoreCalculator();
-    private final com.ororura.analyzer.resume.market.MarketAnalysisProfile profile =
+    private final AtsScoreCalculator calculator = new AtsScoreCalculator(AnalysisScoringPolicy.defaults());
+    private final com.ororura.analyzer.market.domain.MarketAnalysisProfile profile =
             TechnologyTaxonomyTests.profile();
 
     @Test

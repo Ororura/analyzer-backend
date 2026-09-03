@@ -1,13 +1,13 @@
-package com.ororura.analyzer.vacancy.requirement;
+package com.ororura.analyzer.market.requirement;
 
 import java.util.List;
 
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfile;
-import com.ororura.analyzer.resume.ai.ResumeAnalysisProfileRegistry;
-import com.ororura.analyzer.resume.ai.profile.JavaBackendAnalysisProfile;
-import com.ororura.analyzer.resume.ai.profile.ReactFrontendAnalysisProfile;
-import com.ororura.analyzer.resume.market.RequirementType;
-import com.ororura.analyzer.vacancy.model.Vacancy;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.ResumeAnalysisProfileRegistry;
+import com.ororura.analyzer.analysis.profile.definition.JavaBackendAnalysisProfile;
+import com.ororura.analyzer.analysis.profile.definition.ReactFrontendAnalysisProfile;
+import com.ororura.analyzer.market.domain.RequirementType;
+import com.ororura.analyzer.vacancy.domain.Vacancy;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,9 +18,9 @@ import static org.mockito.Mockito.when;
 class VacancyRequirementPipelineTests {
 
     private final ResumeAnalysisProfileRegistry registry = new ResumeAnalysisProfileRegistry(List.of(
-            new JavaBackendAnalysisProfile(), new ReactFrontendAnalysisProfile()));
-    private final com.ororura.analyzer.resume.ai.AnalysisTechnologyCatalog technologies =
-            new com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog();
+            new JavaBackendAnalysisProfile("Java Backend Developer"), new ReactFrontendAnalysisProfile()));
+    private final com.ororura.analyzer.analysis.profile.AnalysisTechnologyCatalog technologies =
+            new com.ororura.analyzer.analysis.profile.DefaultAnalysisTechnologyCatalog();
     private final RequirementCanonicalizer canonicalizer = new RequirementCanonicalizer(technologies);
     private final KnownRequirementExtractor knownExtractor = new KnownRequirementExtractor(technologies, canonicalizer);
     private final VacancyRequirementMerger merger = new VacancyRequirementMerger(canonicalizer);

@@ -2,7 +2,7 @@ package com.ororura.analyzer.resume.api;
 
 import java.util.List;
 
-import com.ororura.analyzer.resume.ai.AiProviderType;
+import com.ororura.analyzer.resume.application.port.AiProviderType;
 
 public record AiProvidersResponse(AiProviderType defaultProvider, List<Provider> providers) {
 

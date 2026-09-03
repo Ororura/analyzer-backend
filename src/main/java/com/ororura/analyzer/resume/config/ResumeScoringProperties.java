@@ -66,11 +66,19 @@ public class ResumeScoringProperties {
     public void setLowEffortWeight(double value) { lowEffortWeight = value; }
     public void setMediumEffortWeight(double value) { mediumEffortWeight = value; }
     public void setHighEffortWeight(double value) { highEffortWeight = value; }
-    public double gapWeight(com.ororura.analyzer.resume.api.SkillGapAnalysis.GapPriority priority) {
+    public double gapWeight(com.ororura.analyzer.resume.domain.analysis.SkillGapAnalysis.GapPriority priority) {
         return switch (priority) { case HIGH -> highGapWeight; case MEDIUM -> mediumGapWeight; case LOW -> lowGapWeight; };
     }
-    public double effortWeight(com.ororura.analyzer.resume.api.SkillRoiAnalysis.Effort effort) {
+    public double effortWeight(com.ororura.analyzer.resume.domain.analysis.SkillRoiAnalysis.Effort effort) {
         return switch (effort) { case LOW -> lowEffortWeight; case MEDIUM -> mediumEffortWeight; case HIGH -> highEffortWeight; };
+    }
+
+    public com.ororura.analyzer.analysis.scoring.AnalysisScoringPolicy toPolicy() {
+        return new com.ororura.analyzer.analysis.scoring.AnalysisScoringPolicy(
+                mustHaveWeight, skillCoverageWeight, experienceWeight, atsWeight, gradeWeight,
+                mustHaveRequiredFrequency, coreFrequency, highFrequency, mediumFrequency,
+                highGapThreshold, mediumGapThreshold, atsWeights(), highGapWeight, mediumGapWeight,
+                lowGapWeight, lowEffortWeight, mediumEffortWeight, highEffortWeight);
     }
 
     @jakarta.annotation.PostConstruct

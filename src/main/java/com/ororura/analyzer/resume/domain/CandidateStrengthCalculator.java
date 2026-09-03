@@ -1,8 +1,6 @@
 package com.ororura.analyzer.resume.domain;
 
-import org.springframework.stereotype.Component;
 
-@Component
 public class CandidateStrengthCalculator {
 
     public int calculate(int technical, int commercialExperience, int responsibility) {

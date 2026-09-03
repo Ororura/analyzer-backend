@@ -1,7 +1,7 @@
-package com.ororura.analyzer.vacancy.hh;
+package com.ororura.analyzer.vacancy.infrastructure.hh;
 
-import com.ororura.analyzer.vacancy.hh.dto.HhDtos.SearchPage;
-import com.ororura.analyzer.vacancy.provider.VacancySourceException;
+import com.ororura.analyzer.vacancy.infrastructure.hh.dto.HhDtos.SearchPage;
+import com.ororura.analyzer.vacancy.application.port.VacancySourceException;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 
