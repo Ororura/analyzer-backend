@@ -21,9 +21,6 @@ public record MarketAnalysisProfile(
         String version) {
 
     public MarketAnalysisProfile {
-        if (profile == null) {
-            throw new IllegalArgumentException("Market analysis profile type must be defined");
-        }
         if (targetRole == null || targetRole.isBlank()) {
             throw new IllegalArgumentException("Market analysis target role must not be blank");
         }
@@ -54,6 +51,7 @@ public record MarketAnalysisProfile(
             int sampleSize, Instant generatedAt, String version) {
         this(profile, targetRole, criteria, requirements, List.of(), List.of(), false,
                 sampleSize, generatedAt, version);
+        if (profile == null) throw new IllegalArgumentException("Legacy profile type must be defined");
     }
 
     private static void ensureUniqueCriterionIds(List<AnalysisCriterion> criteria) {

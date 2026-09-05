@@ -13,5 +13,10 @@ public interface AiProvider {
 
     Optional<String> model();
 
+    default LlmResumeAnalysisResponse analyze(com.ororura.analyzer.analysis.domain.EffectiveAnalysisConfig config,
+            String resumeText) {
+        return analyze(config.analysisProfile(), resumeText, config.market());
+    }
+
     LlmResumeAnalysisResponse analyze(MarketAnalysisProfile profile, String resumeText, VacancyMarketData market);
 }

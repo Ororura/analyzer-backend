@@ -57,9 +57,9 @@ public class VacancySearchService {
     }
 
     private static Sort sort(VacancySort requested) {
-        if (requested == VacancySort.SALARY_DESC) return Sort.by(Sort.Order.desc("salaryFrom").nullsLast());
-        if (requested == VacancySort.RELEVANCE) return Sort.by(Sort.Order.desc("publishedAt").nullsLast());
-        return Sort.by(Sort.Order.desc("publishedAt").nullsLast());
+        if (requested == VacancySort.SALARY_DESC) return Sort.by(Sort.Order.desc("salaryFrom").nullsLast(), Sort.Order.asc("id"));
+        if (requested == VacancySort.RELEVANCE) return Sort.by(Sort.Order.desc("publishedAt").nullsLast(), Sort.Order.asc("id"));
+        return Sort.by(Sort.Order.desc("publishedAt").nullsLast(), Sort.Order.asc("id"));
     }
 
     public record LocalSearchResult(List<Vacancy> items, int totalPages, long totalElements,

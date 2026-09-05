@@ -77,10 +77,17 @@ public class CodexCliAiProvider implements AiProvider {
     public LlmResumeAnalysisResponse analyze(MarketAnalysisProfile profile, String resumeText, VacancyMarketData market) {
         acquirePermit();
         try {
-            return performAnalysis(profile, resumeText, market);
+            return performAnalysis(promptFactory.create(profile, resumeText, market));
         } finally {
             permits.release();
         }
+    }
+
+    @Override
+    public LlmResumeAnalysisResponse analyze(com.ororura.analyzer.analysis.domain.EffectiveAnalysisConfig config, String text) {
+        acquirePermit();
+        try { return performAnalysis(promptFactory.create(config, text)); }
+        finally { permits.release(); }
     }
 
     private void acquirePermit() {
@@ -90,11 +97,9 @@ public class CodexCliAiProvider implements AiProvider {
         }
     }
 
-    private LlmResumeAnalysisResponse performAnalysis(MarketAnalysisProfile profile, String resumeText,
-            VacancyMarketData market) {
+    private LlmResumeAnalysisResponse performAnalysis(ResumeAnalysisPrompt prompt) {
         Instant started = Instant.now();
         try (CodexWorkspace workspace = CodexWorkspace.create()) {
-            var prompt = promptFactory.create(profile, resumeText, market);
             writeSchema(workspace.schemaPath(), prompt.schema());
             log.info("Codex analysis started provider={}", type());
             ProcessRunner.ProcessResult process = executeCodex(workspace, prompt.cliPrompt());

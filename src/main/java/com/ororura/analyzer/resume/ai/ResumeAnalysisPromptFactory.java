@@ -116,7 +116,7 @@ public class ResumeAnalysisPromptFactory {
 
     public ResumeAnalysisPrompt create(MarketAnalysisProfile profile, String resumeText, VacancyMarketData market) {
         ObjectNode input = objectMapper.createObjectNode();
-        input.put("analysisProfile", profile.profile().name());
+        input.put("analysisProfile", profile.profile() == null ? "CUSTOM" : profile.profile().name());
         input.put("marketProfileVersion", profile.version());
         input.set("criteria", objectMapper.valueToTree(profile.criteria().stream()
                 .map(value -> new PromptCriterion(value.id(), value.label(), value.description())).toList()));
@@ -125,6 +125,13 @@ public class ResumeAnalysisPromptFactory {
         input.set("marketContext", objectMapper.valueToTree(market));
         String systemPrompt = BASE_SYSTEM_PROMPT.formatted(profile.targetRole());
         return new ResumeAnalysisPrompt(systemPrompt, input, schemaFactory.create(profile));
+    }
+
+    public ResumeAnalysisPrompt create(com.ororura.analyzer.analysis.domain.EffectiveAnalysisConfig config, String text) {
+        var base = create(config.analysisProfile(), text, config.market());
+        ObjectNode input = (ObjectNode) base.input().deepCopy();
+        input.set("analysisSettings", objectMapper.valueToTree(config.profile().segment()));
+        return new ResumeAnalysisPrompt(base.systemInstruction(), input, base.schema());
     }
 
     private record PromptCriterion(String id, String label, String description) {

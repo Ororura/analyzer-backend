@@ -45,7 +45,7 @@ public class ResumeAnalysisController {
             @ApiResponse(responseCode = "504", description = "AI provider timeout",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    @PostMapping(value = "/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+    @PostMapping(value = "/analyze", params = "!profileId", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResumeAnalysisResult analyze(
             @RequestPart("file") @Schema(type = "string", format = "binary") MultipartFile file,

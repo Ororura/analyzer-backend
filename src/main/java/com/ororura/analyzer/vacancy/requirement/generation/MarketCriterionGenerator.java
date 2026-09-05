@@ -88,6 +88,13 @@ public class MarketCriterionGenerator {
                 statistics.processedCount(), clock.instant());
     }
 
+    /** Semantic grouping only; the caller applies a separately pinned Java scoring policy. */
+    public List<GeneratedCriterionGroup> group(String targetRole, MarketRequirementStatistics statistics) {
+        if (!statistics.sufficientSample() || statistics.requirements().isEmpty()) return List.of();
+        return groupingValidator.validate(responseParser.parse(aiGateway.complete(
+                promptFactory.create(targetRole, statistics))), statistics);
+    }
+
     private SkillImportance importance(double frequency) {
         if (frequency >= scoring.getCoreFrequency()) return SkillImportance.CORE;
         if (frequency >= scoring.getHighFrequency()) return SkillImportance.HIGH;

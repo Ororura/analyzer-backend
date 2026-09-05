@@ -53,6 +53,7 @@ public class SkillNormalizer {
                     .toList();
             definitions.put(id, new SkillDefinition(id, technology.name(), aliases, parent(id)));
         });
+        if (profile == null) return List.copyOf(definitions.values());
         add(definitions, "spring", "Spring", null, "spring framework");
         add(definitions, "spring_boot", "Spring Boot", "spring", "springboot", "spring-boot");
         add(definitions, "spring_security", "Spring Security", "spring", "spring-security");

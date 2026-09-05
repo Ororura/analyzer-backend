@@ -41,7 +41,7 @@ public class DefaultAnalysisTechnologyCatalog implements AnalysisTechnologyCatal
 
     @Override
     public List<AnalysisTechnology> technologies(ResumeAnalysisProfile profile) {
-        return CATALOG.getOrDefault(profile, List.of());
+        return profile == null ? List.of() : CATALOG.getOrDefault(profile, List.of());
     }
 
     private static AnalysisTechnology tech(String name, String... patterns) {

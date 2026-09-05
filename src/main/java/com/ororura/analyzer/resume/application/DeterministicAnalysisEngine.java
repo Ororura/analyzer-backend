@@ -43,9 +43,17 @@ public class DeterministicAnalysisEngine {
     public AnalysisDetails analyze(MarketAnalysisProfile profile, LlmResumeAnalysisResponse llm, String text,
             VacancyMarketData market, int commercialScore, int commercialMonths,
             AtsScoreCalculator.AtsScore legacyAts, int technicalScore, CandidateLevel level, boolean singleVacancy) {
+        return analyze(profile,llm,text,market,commercialScore,commercialMonths,legacyAts,technicalScore,level,singleVacancy,null);
+    }
+
+    public AnalysisDetails analyze(MarketAnalysisProfile profile, LlmResumeAnalysisResponse llm, String text,
+            VacancyMarketData market, int commercialScore, int commercialMonths,
+            AtsScoreCalculator.AtsScore legacyAts, int technicalScore, CandidateLevel level, boolean singleVacancy,
+            com.ororura.analyzer.analysis.domain.CandidateGrade targetGrade) {
         var evidence = evidenceClassifier.classify(profile, llm);
         var technical = technicalScorer.score(llm.assessments(), profile.criteria());
-        var grade = gradeScorer.score(level, market);
+        var grade = targetGrade == null ? gradeScorer.score(level, market) : gradeScorer.score(
+                com.ororura.analyzer.analysis.domain.CandidateGrade.fromLegacy(level), targetGrade);
         var ats = atsCalculator.details(text, llm, legacyAts);
         var marketFit = marketFitScorer.score(profile, evidence, commercialScore, ats.score(), grade);
         var gaps = gapScorer.score(profile, evidence);

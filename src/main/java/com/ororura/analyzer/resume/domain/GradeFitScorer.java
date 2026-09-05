@@ -15,7 +15,22 @@ public class GradeFitScorer {
             return new GradeFitAnalysis(candidate, null, GradeFitAnalysis.GradeFit.UNKNOWN,
                     GradeFitAnalysis.Severity.UNKNOWN, 0, new ScoreBreakdown(null, java.util.List.of()));
         }
-        int difference = candidate.ordinal() - target.ordinal();
+        int difference = legacyRank(candidate) - legacyRank(target);
+        return comparison(candidate, target, difference);
+    }
+
+    public GradeFitAnalysis score(com.ororura.analyzer.analysis.domain.CandidateGrade candidate,
+            com.ororura.analyzer.analysis.domain.CandidateGrade target) {
+        var policy = new com.ororura.analyzer.analysis.domain.GradePolicy();
+        return comparison(candidate.toLegacy(), target.toLegacy(), policy.rank(candidate) - policy.rank(target));
+    }
+
+    private static int legacyRank(CandidateLevel value) {
+        return switch(value) { case INTERN -> 0; case JUNIOR -> 1; case JUNIOR_PLUS -> 2;
+            case MIDDLE_MINUS -> 3; case MIDDLE -> 4; case MIDDLE_PLUS -> 5; case SENIOR -> 6; };
+    }
+
+    private GradeFitAnalysis comparison(CandidateLevel candidate, CandidateLevel target, int difference) {
         int distance = Math.abs(difference);
         int score = switch (distance) { case 0 -> 100; case 1 -> 82; case 2 -> 60; default -> 35; };
         var fit = difference == 0 ? GradeFitAnalysis.GradeFit.MATCH

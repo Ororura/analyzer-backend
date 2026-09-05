@@ -19,7 +19,7 @@ public record MarketRequirementStatistics(
         List<RequirementStatistics> requirements) {
 
     public MarketRequirementStatistics {
-        if (profile == null || fetchedCount < 0 || processedCount < 0 || failedCount < 0
+        if (fetchedCount < 0 || processedCount < 0 || failedCount < 0
                 || sampleSize != processedCount || fetchedCount != processedCount + failedCount) {
             throw new IllegalArgumentException("Market requirement sample accounting is inconsistent");
         }

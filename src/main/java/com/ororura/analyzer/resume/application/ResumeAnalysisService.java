@@ -123,7 +123,7 @@ public class ResumeAnalysisService {
         Instant started = clock.instant();
         log.info("resume analysis started analysisId={} fileSize={}", analysisId, file == null ? 0 : file.getSize());
         try {
-            return analyze(file, requestedProvider, requestedProfile, vacancyAnalysis, analysisId, started);
+            return analyze(file, requestedProvider, requestedProfile, vacancyAnalysis, analysisId, started, null, (text, llm) -> {});
         } catch (VacancySelectionException exception) {
             ResumeErrorCode code = exception.getMessage().contains("maximumProcessingSize")
                     ? ResumeErrorCode.SELECTION_TOO_LARGE : ResumeErrorCode.INVALID_SELECTION;
@@ -145,9 +145,19 @@ public class ResumeAnalysisService {
         }
     }
 
+    public ResumeAnalysisResult analyze(MultipartFile file,
+            com.ororura.analyzer.analysis.domain.EffectiveAnalysisConfig config,
+            java.util.function.BiConsumer<String, LlmResumeAnalysisResponse> evidenceSink) {
+        if (config.schemaVersion() != 1 || !com.ororura.analyzer.analysis.domain.ScoringPolicy.VERSION.equals(
+                config.scoringPolicy().algorithmVersion())) throw new IllegalArgumentException("Unsupported config version");
+        return analyze(file, config.provider(), null, VacancyAnalysisRequest.autoMarket(),
+                UUID.randomUUID().toString(), clock.instant(), config, evidenceSink);
+    }
+
     private ResumeAnalysisResult analyze(MultipartFile file, AiProviderType requestedProvider,
             ResumeAnalysisProfile requestedProfile, VacancyAnalysisRequest vacancyAnalysis,
-            String analysisId, Instant started) {
+            String analysisId, Instant started, com.ororura.analyzer.analysis.domain.EffectiveAnalysisConfig config,
+            java.util.function.BiConsumer<String, LlmResumeAnalysisResponse> evidenceSink) {
         byte[] pdf = fileValidator.validate(file);
         log.info("pdf validated analysisId={} fileSize={}", analysisId, pdf.length);
         String text = textExtractor.extract(pdf);
@@ -156,14 +166,18 @@ public class ResumeAnalysisService {
             throw new ResumeAnalysisException(ResumeErrorCode.RESUME_TEXT_TOO_LARGE,
                     "Extracted resume text exceeds the configured size limit");
         }
-        AiProvider aiProvider = aiProviderRegistry.get(requestedProvider);
+        AiProvider aiProvider = aiProviderRegistry.get(config == null ? requestedProvider : config.provider());
+        if (config != null && !java.util.Objects.equals(config.model(), aiProvider.model().orElse(null)))
+            throw new IllegalStateException("Pinned provider model changed");
         ResumeAnalysisProfile profile = requestedProfile == null
                 ? ResumeAnalysisProfile.defaultProfile() : requestedProfile;
-        var resolvedMarketProfile = marketProfileProvider.resolve(profile);
+        var resolvedMarketProfile = config == null ? marketProfileProvider.resolve(profile)
+                : new com.ororura.analyzer.resume.market.ResolvedMarketAnalysisProfile(config.analysisProfile(),
+                        com.ororura.analyzer.resume.market.MarketProfileSource.SNAPSHOT);
         MarketAnalysisProfile marketProfile = resolvedMarketProfile.profile();
         VacancyAnalysisMode mode = vacancyAnalysis == null || vacancyAnalysis.mode() == null
                 ? VacancyAnalysisMode.AUTO_MARKET : vacancyAnalysis.mode();
-        VacancyMarketData market = mode == VacancyAnalysisMode.AUTO_MARKET
+        VacancyMarketData market = config != null ? config.market() : mode == VacancyAnalysisMode.AUTO_MARKET
                 ? marketService.load(profile, marketProfile.targetRole())
                 : marketService.load(profile, vacancyAnalysis, marketProfile.targetRole());
         if (mode == VacancyAnalysisMode.SINGLE_VACANCY) {
@@ -171,9 +185,12 @@ public class ResumeAnalysisService {
         }
         log.info("market context resolved analysisId={} source={} sampleSize={}",
                 analysisId, market.source(), market.sampleSize());
-        LlmResumeAnalysisResponse llm = aiProvider.analyze(marketProfile, text, market);
+        LlmResumeAnalysisResponse llm = config == null ? aiProvider.analyze(marketProfile, text, market) : aiProvider.analyze(config, text);
+        evidenceSink.accept(text, llm);
         log.info("AI request completed analysisId={} provider={}", analysisId, aiProvider.type());
-        List<EmploymentPeriod> periods = llmValidator.validateAndConvert(llm, marketProfile);
+        var validator = config == null ? llmValidator : new LlmResponseValidator(
+                Clock.fixed(config.evaluationTime(), java.time.ZoneOffset.UTC));
+        List<EmploymentPeriod> periods = validator.validateAndConvert(llm, marketProfile);
         log.info("LLM response validated analysisId={}", analysisId);
 
         ExperienceSummary experience = experienceCalculator.calculate(periods);
@@ -194,8 +211,14 @@ public class ResumeAnalysisService {
                 llm.experienceAssessment().responsibilityLevel().score(), overall);
         var hrChance = chancePolicy.hr(ats.total(), overall);
         var technicalChance = chancePolicy.technical(technicalScore, overall);
-        var details = deterministicEngine.analyze(marketProfile, llm, text, market, commercialScore,
-                experience.commercialMonths(), ats, technicalScore, level, mode == VacancyAnalysisMode.SINGLE_VACANCY);
+        var engine = config == null ? deterministicEngine : defaultEngine(
+                new AtsScoreCalculator(com.ororura.analyzer.resume.config.ResumeScoringProperties.fromSnapshot(config.scoringPolicy().parameters())),
+                overallCalculator, com.ororura.analyzer.resume.config.ResumeScoringProperties.fromSnapshot(config.scoringPolicy().parameters()));
+        if (config != null) level = new com.ororura.analyzer.analysis.domain.GradePolicy().detect(
+                experience.commercialMonths(), technicalScore, llm.experienceAssessment().responsibilityLevel().score(), overall).toLegacy();
+        var details = engine.analyze(marketProfile, llm, text, market, commercialScore,
+                experience.commercialMonths(), ats, technicalScore, level, mode == VacancyAnalysisMode.SINGLE_VACANCY,
+                config == null ? null : config.profile().targetGrade());
         Instant completed = clock.instant();
         log.info("deterministic calculations completed analysisId={} ats={} overall={}", analysisId, ats.total(), overall);
         ResumeAnalysisResult result = assembler.assemble(marketProfile, llm, experience, technologies, market, commercialScore,
@@ -208,7 +231,11 @@ public class ResumeAnalysisService {
 
     private static DeterministicAnalysisEngine defaultEngine(AtsScoreCalculator ats,
             OverallScoreCalculator overall) {
-        var scoring = new com.ororura.analyzer.resume.config.ResumeScoringProperties();
+        return defaultEngine(ats, overall, new com.ororura.analyzer.resume.config.ResumeScoringProperties());
+    }
+
+    private static DeterministicAnalysisEngine defaultEngine(AtsScoreCalculator ats, OverallScoreCalculator overall,
+            com.ororura.analyzer.resume.config.ResumeScoringProperties scoring) {
         var catalog = new com.ororura.analyzer.resume.ai.DefaultAnalysisTechnologyCatalog();
         var evidence = new com.ororura.analyzer.resume.domain.EvidenceClassifier(
                 new com.ororura.analyzer.resume.domain.SkillNormalizer(catalog));

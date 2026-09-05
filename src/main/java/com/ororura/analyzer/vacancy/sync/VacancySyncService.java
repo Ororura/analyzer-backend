@@ -27,10 +27,20 @@ public class VacancySyncService {
     private final VacancyMarketVersionService marketVersion;
     private final MarketProfileRefreshCoordinator marketProfiles;
     private final ResumeAnalysisProfileRegistry profiles;
+    private final com.ororura.analyzer.analysis.market.ProfileMarketQuerySource userQueries;
 
     public VacancySyncService(VacancyProvider provider, VacancySyncPersistenceService persistence,
             VacancySyncProperties properties, VacancyCacheFacade cache, VacancyMarketVersionService marketVersion,
             MarketProfileRefreshCoordinator marketProfiles, ResumeAnalysisProfileRegistry profiles) {
+        this(provider,persistence,properties,cache,marketVersion,marketProfiles,profiles,null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public VacancySyncService(VacancyProvider provider, VacancySyncPersistenceService persistence,
+            VacancySyncProperties properties, VacancyCacheFacade cache, VacancyMarketVersionService marketVersion,
+            MarketProfileRefreshCoordinator marketProfiles, ResumeAnalysisProfileRegistry profiles,
+            com.ororura.analyzer.analysis.market.ProfileMarketQuerySource userQueries) {
+        this.userQueries=userQueries;
         this.provider = provider;
         this.persistence = persistence;
         this.properties = properties;
@@ -46,12 +56,14 @@ public class VacancySyncService {
         int fetched = 0, created = 0, updated = 0, unchanged = 0, failed = 0;
         String lastError = null;
         persistence.markStarted();
+        int pageSize = Math.max(1, Math.min(50, properties.pageSize()));
         syncQueries:
-        for (String query : searchQueries()) {
-            for (int page = 0; page < properties.pagesPerCycle(); page++) {
+        for (VacancySearchCriteria plan : searchPlans()) {
+            String query = plan.query();
+            for (int page = 0; page < Math.min(10, Math.min(properties.pagesPerCycle(), 200 / pageSize)); page++) {
                 VacancyProviderSearchResult result;
                 try {
-                    result = provider.search(criteria(query, page));
+                    result = provider.search(plan.withPage(page, pageSize));
                 } catch (RuntimeException exception) {
                     failed++;
                     lastError = exception.getMessage();
@@ -103,9 +115,11 @@ public class VacancySyncService {
                 null, null, null, null, List.of(), null, null, page, properties.pageSize(), List.of(), List.of());
     }
 
-    private List<String> searchQueries() {
-        return profiles.all().stream().flatMap(profile -> profile.vacancySearchQueries().stream())
-                .map(String::trim).filter(value -> !value.isEmpty()).distinct().toList();
+    private List<VacancySearchCriteria> searchPlans() {
+        var legacy = profiles.all().stream().flatMap(profile -> profile.vacancySearchQueries().stream())
+                .map(String::trim).filter(value -> !value.isEmpty()).distinct().map(query -> criteria(query, 0));
+        return java.util.stream.Stream.concat(legacy,
+                userQueries == null ? java.util.stream.Stream.empty() : userQueries.nextPlans().stream()).distinct().toList();
     }
 
     private static <T> List<List<T>> batches(List<T> values, int size) {

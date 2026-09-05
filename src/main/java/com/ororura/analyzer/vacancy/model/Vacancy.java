@@ -27,6 +27,11 @@ public record Vacancy(
         String publishedAt,
         String normalizedAt) implements Serializable {
 
+    @com.fasterxml.jackson.annotation.JsonProperty(value="vacancyGrade", access=com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY)
+    public com.ororura.analyzer.analysis.domain.CandidateGrade vacancyGrade() {
+        return new com.ororura.analyzer.analysis.domain.GradePolicy().classify(title).vacancyGrade();
+    }
+
     public Vacancy {
         skills = List.copyOf(skills);
         requirements = List.copyOf(requirements);

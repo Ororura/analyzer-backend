@@ -50,8 +50,16 @@ public class PolzaAiProvider implements AiProvider {
 
     @Override
     public LlmResumeAnalysisResponse analyze(MarketAnalysisProfile profile, String resumeText, VacancyMarketData market) {
+        return complete(promptFactory.create(profile, resumeText, market));
+    }
+
+    @Override
+    public LlmResumeAnalysisResponse analyze(com.ororura.analyzer.analysis.domain.EffectiveAnalysisConfig config, String text) {
+        return complete(promptFactory.create(config, text));
+    }
+
+    private LlmResumeAnalysisResponse complete(ResumeAnalysisPrompt prompt) {
         try {
-            var prompt = promptFactory.create(profile, resumeText, market);
             CompletionRequest request = new CompletionRequest(
                     List.of(new CompletionMessage("system", StringNode.valueOf(prompt.systemInstruction())),
                             new CompletionMessage("user", prompt.input())),

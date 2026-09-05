@@ -43,6 +43,11 @@ public record ResumeAnalysisResult(
         String markdownReport,
         List<String> warnings) {
 
+    @com.fasterxml.jackson.annotation.JsonProperty(value="detectedGrade", access=com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY)
+    public com.ororura.analyzer.analysis.domain.CandidateGrade detectedGrade() {
+        return com.ororura.analyzer.analysis.domain.CandidateGrade.fromLegacy(detectedLevel);
+    }
+
     public ResumeAnalysisResult {
         strengths = List.copyOf(strengths);
         weaknesses = List.copyOf(weaknesses);

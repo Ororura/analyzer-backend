@@ -73,6 +73,63 @@ public class ResumeScoringProperties {
         return switch (effort) { case LOW -> lowEffortWeight; case MEDIUM -> mediumEffortWeight; case HIGH -> highEffortWeight; };
     }
 
+    public java.util.Map<String, Double> snapshotParameters() {
+        return java.util.Map.ofEntries(
+                java.util.Map.entry("mustHaveWeight", mustHaveWeight),
+                java.util.Map.entry("skillCoverageWeight", skillCoverageWeight),
+                java.util.Map.entry("experienceWeight", experienceWeight),
+                java.util.Map.entry("atsWeight", atsWeight),
+                java.util.Map.entry("gradeWeight", gradeWeight),
+                java.util.Map.entry("mustHaveRequiredFrequency", mustHaveRequiredFrequency),
+                java.util.Map.entry("coreFrequency", coreFrequency),
+                java.util.Map.entry("highFrequency", highFrequency),
+                java.util.Map.entry("mediumFrequency", mediumFrequency),
+                java.util.Map.entry("highGapThreshold", highGapThreshold),
+                java.util.Map.entry("mediumGapThreshold", mediumGapThreshold),
+                java.util.Map.entry("atsParsingWeight", atsParsingWeight),
+                java.util.Map.entry("atsSectionsWeight", atsSectionsWeight),
+                java.util.Map.entry("atsContactsWeight", atsContactsWeight),
+                java.util.Map.entry("atsExperienceWeight", atsExperienceWeight),
+                java.util.Map.entry("atsEducationWeight", atsEducationWeight),
+                java.util.Map.entry("atsSkillsWeight", atsSkillsWeight),
+                java.util.Map.entry("atsKeywordWeight", atsKeywordWeight),
+                java.util.Map.entry("highGapWeight", highGapWeight),
+                java.util.Map.entry("mediumGapWeight", mediumGapWeight),
+                java.util.Map.entry("lowGapWeight", lowGapWeight),
+                java.util.Map.entry("lowEffortWeight", lowEffortWeight),
+                java.util.Map.entry("mediumEffortWeight", mediumEffortWeight),
+                java.util.Map.entry("highEffortWeight", highEffortWeight));
+    }
+    public static ResumeScoringProperties fromSnapshot(java.util.Map<String, Double> values) {
+        var p = new ResumeScoringProperties();
+        p.mustHaveWeight = java.util.Objects.requireNonNull(values.get("mustHaveWeight"));
+        p.skillCoverageWeight = java.util.Objects.requireNonNull(values.get("skillCoverageWeight"));
+        p.experienceWeight = java.util.Objects.requireNonNull(values.get("experienceWeight"));
+        p.atsWeight = java.util.Objects.requireNonNull(values.get("atsWeight"));
+        p.gradeWeight = java.util.Objects.requireNonNull(values.get("gradeWeight"));
+        p.mustHaveRequiredFrequency = java.util.Objects.requireNonNull(values.get("mustHaveRequiredFrequency"));
+        p.coreFrequency = java.util.Objects.requireNonNull(values.get("coreFrequency"));
+        p.highFrequency = java.util.Objects.requireNonNull(values.get("highFrequency"));
+        p.mediumFrequency = java.util.Objects.requireNonNull(values.get("mediumFrequency"));
+        p.highGapThreshold = java.util.Objects.requireNonNull(values.get("highGapThreshold"));
+        p.mediumGapThreshold = java.util.Objects.requireNonNull(values.get("mediumGapThreshold"));
+        p.atsParsingWeight = java.util.Objects.requireNonNull(values.get("atsParsingWeight"));
+        p.atsSectionsWeight = java.util.Objects.requireNonNull(values.get("atsSectionsWeight"));
+        p.atsContactsWeight = java.util.Objects.requireNonNull(values.get("atsContactsWeight"));
+        p.atsExperienceWeight = java.util.Objects.requireNonNull(values.get("atsExperienceWeight"));
+        p.atsEducationWeight = java.util.Objects.requireNonNull(values.get("atsEducationWeight"));
+        p.atsSkillsWeight = java.util.Objects.requireNonNull(values.get("atsSkillsWeight"));
+        p.atsKeywordWeight = java.util.Objects.requireNonNull(values.get("atsKeywordWeight"));
+        p.highGapWeight = java.util.Objects.requireNonNull(values.get("highGapWeight"));
+        p.mediumGapWeight = java.util.Objects.requireNonNull(values.get("mediumGapWeight"));
+        p.lowGapWeight = java.util.Objects.requireNonNull(values.get("lowGapWeight"));
+        p.lowEffortWeight = java.util.Objects.requireNonNull(values.get("lowEffortWeight"));
+        p.mediumEffortWeight = java.util.Objects.requireNonNull(values.get("mediumEffortWeight"));
+        p.highEffortWeight = java.util.Objects.requireNonNull(values.get("highEffortWeight"));
+        p.validate();
+        return p;
+    }
+
     @jakarta.annotation.PostConstruct
     void validate() {
         validateUnit(mustHaveWeight, skillCoverageWeight, experienceWeight, atsWeight, gradeWeight,

@@ -31,8 +31,12 @@ public class MarketProfileRefreshCoordinator {
             try {
                 Map<String, Vacancy> pool = new LinkedHashMap<>();
                 for (String query : profile.vacancySearchQueries()) {
-                    queries.searchDomain(new VacancySearchQuery(query, 0, 200, null, null, null, null, null).toCriteria())
-                            .items().forEach(vacancy -> pool.putIfAbsent(vacancy.id(), vacancy));
+                    for (int page = 0; page < 4; page++) {
+                        var result = queries.searchDomain(new VacancySearchQuery(query, page, 50,
+                                null, null, null, null, null).toCriteria());
+                        result.items().forEach(vacancy -> pool.putIfAbsent(vacancy.id(), vacancy));
+                        if (!result.hasNext() || result.items().isEmpty()) break;
+                    }
                 }
                 refresh.refresh(requirements.analyze(profile.profile(), pool.values().stream().toList()));
             } catch (RuntimeException exception) {

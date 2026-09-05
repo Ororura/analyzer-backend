@@ -31,8 +31,12 @@ public class VacancyRequirementPipeline {
         this.properties = properties;
     }
 
+    public MarketRequirementStatistics analyzeSegment(List<Vacancy> vacancies) {
+        return analyze(null, vacancies);
+    }
+
     public MarketRequirementStatistics analyze(ResumeAnalysisProfile profile, List<Vacancy> vacancies) {
-        if (profile == null || vacancies == null) {
+        if (vacancies == null) {
             throw new IllegalArgumentException("Profile and vacancy pool must be defined");
         }
         PreparedPool pool = prepare(vacancies);

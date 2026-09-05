@@ -66,6 +66,32 @@ public class ApiExceptionHandler {
                 .body(ApiErrorResponse.of("NOT_FOUND", "Route not found"));
     }
 
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ApiErrorResponse> handleStatus(org.springframework.web.server.ResponseStatusException e) {
+        return ResponseEntity.status(e.getStatusCode()).body(ApiErrorResponse.of("REQUEST_REJECTED", e.getReason()));
+    }
+
+    @ExceptionHandler({org.springframework.web.bind.MethodArgumentNotValidException.class,
+            org.springframework.http.converter.HttpMessageNotReadableException.class})
+    public ResponseEntity<ApiErrorResponse> handleBody(Exception e) {
+        return ResponseEntity.badRequest().body(ApiErrorResponse.of("INVALID_BODY", "Invalid request body"));
+    }
+
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiErrorResponse> handleVersion(Exception e) {
+        return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED)
+                .body(ApiErrorResponse.of("VERSION_CONFLICT", "Profile version has changed"));
+    }
+
+    @ExceptionHandler(com.ororura.analyzer.analysis.application.ProfileAnalysisService.ProfileAnalysisFailure.class)
+    public ResponseEntity<ApiErrorResponse> handleRunFailure(
+            com.ororura.analyzer.analysis.application.ProfileAnalysisService.ProfileAnalysisFailure e) {
+        var response = e.getCause() instanceof ResumeAnalysisException failure ? handleResumeAnalysis(failure) :
+                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiErrorResponse.of("ANALYSIS_FAILED", "Analysis failed"));
+        return ResponseEntity.status(response.getStatusCode()).header("X-Analysis-Run-Id",e.runId().toString())
+                .body(response.getBody());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
